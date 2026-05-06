@@ -1548,14 +1548,10 @@
             if (pageId === 'salesPage') {
                 closeQuickAddModal();
                 closeSelectModal();
-                setTimeout(() => {
-                    openSelectProductModal();
-                }, 50);
+                openSelectProductModal();
             } else if (pageId === 'productsPage') {
                 closeModal();
-                setTimeout(() => {
-                    openProductModal();
-                }, 50);
+                openProductModal();
             }
         }
 
@@ -1563,16 +1559,21 @@
             const productList = document.getElementById('productList');
             const emptyProducts = document.getElementById('emptyProducts');
 
+            // 只移除 .product-list-item 元素，保留 emptyProducts
+            productList.querySelectorAll('.product-list-item').forEach(el => el.remove());
+
             if (products.length === 0) {
                 emptyProducts.style.display = 'block';
-                productList.innerHTML = '';
-                productList.appendChild(emptyProducts);
                 return;
             }
 
             emptyProducts.style.display = 'none';
-            productList.innerHTML = products.map(p => `
-                <div class="product-list-item" onclick="addToOrder('${p.id}')">
+            const fragment = document.createDocumentFragment();
+            products.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'product-list-item';
+                div.onclick = () => addToOrder(p.id);
+                div.innerHTML = `
                     <div class="product-list-item-image">
                         ${p.photo ? `<img src="${p.photo}" alt="${p.name}">` : '🥬'}
                     </div>
@@ -1584,8 +1585,10 @@
                         <button class="action-btn edit-btn" onclick="editProduct('${p.id}')">✏️</button>
                         <button class="action-btn delete-btn" onclick="deleteProduct('${p.id}')">🗑️</button>
                     </div>
-                </div>
-            `).join('');
+                `;
+                fragment.appendChild(div);
+            });
+            productList.appendChild(fragment);
         }
 
         function renderOrderItems() {
@@ -1745,6 +1748,7 @@
             renderProducts();
             clearForm();
             closeModal();
+            showToast(editingProductId ? '商品已更新' : '商品已添加');
         }
 
         function clearForm() {
@@ -1774,6 +1778,13 @@
                 products = products.filter(p => p.id !== id);
                 saveProducts();
                 renderProducts();
+                // 同步清理当前销售单中包含该商品的条目
+                const beforeLen = currentOrder.length;
+                currentOrder = currentOrder.filter(item => item.productId !== id);
+                if (currentOrder.length !== beforeLen) {
+                    renderOrderItems();
+                }
+                showToast('商品已删除');
             }
         }
 
@@ -1786,32 +1797,37 @@
                 return;
             }
 
+            // 只移除 .product-item 元素，保留 emptySelectProducts
+            selectProductList.querySelectorAll('.product-item').forEach(el => el.remove());
+
             if (products.length === 0) {
                 if (emptySelectProducts) {
-                    selectProductList.innerHTML = '';
-                    selectProductList.appendChild(emptySelectProducts);
                     emptySelectProducts.style.display = 'block';
-                } else {
-                    selectProductList.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📦</div>
-                            <div class="empty-state-text">暂无商品，请先添加商品</div>
-                        </div>
-                    `;
                 }
             } else {
                 if (emptySelectProducts) {
                     emptySelectProducts.style.display = 'none';
                 }
-                selectProductList.innerHTML = products.map(p => `
-                    <div class="product-item" onclick="addToOrder('${p.id}')">
+                const fragment = document.createDocumentFragment();
+                products.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'product-item';
+                    div.style.position = 'relative';
+                    div.onclick = (e) => {
+                        if (e.target.closest('.select-product-delete-btn')) return;
+                        addToOrder(p.id);
+                    };
+                    div.innerHTML = `
+                        <button class="select-product-delete-btn" onclick="event.stopPropagation(); deleteProductFromModal('${p.id}')" style="position:absolute;top:4px;right:4px;background:rgba(220,53,69,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;line-height:22px;text-align:center;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;">×</button>
                         <div class="product-image">
                             ${p.photo ? `<img src="${p.photo}" alt="${p.name}">` : '🥬'}
                         </div>
                         <div class="product-name">${p.name}</div>
                         <div class="product-price">¥${p.price.toFixed(2)}/${p.unit}</div>
-                    </div>
-                `).join('');
+                    `;
+                    fragment.appendChild(div);
+                });
+                selectProductList.appendChild(fragment);
             }
 
             const modal = document.getElementById('selectProductModal');
@@ -1824,6 +1840,23 @@
             const modal = document.getElementById('selectProductModal');
             if (modal) {
                 modal.classList.remove('active');
+            }
+        }
+
+        function deleteProductFromModal(id) {
+            if (confirm('确定要删除这个商品吗？')) {
+                products = products.filter(p => p.id !== id);
+                saveProducts();
+                renderProducts();
+                // 同步清理当前销售单中包含该商品的条目
+                const beforeLen = currentOrder.length;
+                currentOrder = currentOrder.filter(item => item.productId !== id);
+                if (currentOrder.length !== beforeLen) {
+                    renderOrderItems();
+                }
+                // 重新渲染选择弹窗中的商品列表
+                openSelectProductModal();
+                showToast('商品已删除');
             }
         }
 
@@ -2075,19 +2108,13 @@
 
             if (!orderHistory) return;
 
+            // 只移除 .order-history-item 元素，保留 emptyHistory
+            orderHistory.querySelectorAll('.order-history-item').forEach(el => el.remove());
+
             const dayData = dailySales[selectedDate];
             if (!dayData || dayData.orders.length === 0) {
                 if (emptyHistory) {
                     emptyHistory.style.display = 'block';
-                    orderHistory.innerHTML = '';
-                    orderHistory.appendChild(emptyHistory);
-                } else {
-                    orderHistory.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📝</div>
-                            <div class="empty-state-text">暂无销售记录</div>
-                        </div>
-                    `;
                 }
                 return;
             }
@@ -2095,8 +2122,11 @@
             if (emptyHistory) {
                 emptyHistory.style.display = 'none';
             }
-            orderHistory.innerHTML = dayData.orders.map((order, index) => `
-                <div class="order-history-item">
+            const fragment = document.createDocumentFragment();
+            dayData.orders.forEach((order, index) => {
+                const div = document.createElement('div');
+                div.className = 'order-history-item';
+                div.innerHTML = `
                     <div class="order-history-header">
                         <span class="order-history-time">🕐 ${order.time}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -2108,8 +2138,10 @@
                         ${order.items.map(item => `${item.name} ${item.quantity}${item.unit}`).join('，')}
                         ${order.remark ? `<br>备注: ${order.remark}` : ''}
                     </div>
-                </div>
-            `).join('');
+                `;
+                fragment.appendChild(div);
+            });
+            orderHistory.appendChild(fragment);
         }
 
         function deleteHistoryOrder(dateKey, orderIndex) {
@@ -2129,7 +2161,24 @@
 
         document.addEventListener('DOMContentLoaded', init);
 
-        if ('serviceWorker' in navigator) {
+        function showToast(message) {
+            let toast = document.getElementById('toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast';
+                toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:99999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 2000);
+        }
+
+        // Service Worker 需要 HTTP/HTTPS 协议，file:// 协议下跳过注册
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
             navigator.serviceWorker.register('/service-worker.js')
                 .then(() => console.log('Service Worker registered'))
                 .catch(err => console.error('Service Worker registration failed:', err));
