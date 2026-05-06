@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="蔬菜小票">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-180x180.png">
+    <title>蔬菜小票打印系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #F5F5F5;
+            color: #212121;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .shop-name-input {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 140px;
+        }
+
+        .shop-name-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .main-content {
+            padding: 70px 15px 80px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2E7D32;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        .btn-primary {
+            background: #35bb3b;
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: #1B5E20;
+        }
+
+        .btn-secondary {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .btn-secondary:active {
+            background: #C8E6C9;
+        }
+
+        .btn-danger {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+
+        .btn-danger:active {
+            background: #FFCDD2;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .btn-large {
+            padding: 16px 24px;
+            font-size: 17px;
+        }
+
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 24px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .product-item {
+            background: #FAFAFA;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            touch-action: manipulation;
+        }
+
+        .product-item:active {
+            background: #E8F5E9;
+            border-color: #4CAF50;
+        }
+
+        .product-item.selected {
+            background: #E8F5E9;
+            border-color: #2E7D32;
+        }
+
+        .product-image {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #E0E0E0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #9E9E9E;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #212121;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-price {
+            font-size: 13px;
+            color: #FF5722;
+            font-weight: 600;
+        }
+
+        .order-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #E0E0E0;
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .order-item-image {
+            width: 50px;
+            height: 50px;
+            background: #E0E0E0;
+            border-radius: 6px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #9E9E9E;
+            overflow: hidden;
+        }
+
+        .order-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .order-item-info {
+            flex: 1;
+        }
+
+        .order-item-name {
+                font-size: 15px;
+                font-weight: 500;
+                margin-bottom: 4px;
+                color: #1976D2;
+                text-decoration: underline;
+                cursor: pointer;
+            }
+
+        .order-item-price {
+            font-size: 13px;
+            color: #757575;
+        }
+
+        .order-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qty-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: #E8F5E9;
+            color: #2E7D32;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .qty-btn:active {
+            background: #C8E6C9;
+        }
+
+        .qty-input {
+            width: 60px;
+            height: 36px;
+            border: 1px solid #E0E0E0;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .order-item-total {
+            font-size: 15px;
+            font-weight: 600;
+            color: #FF5722;
+            min-width: 70px;
+            text-align: right;
+        }
+
+        .order-item-delete {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #FFEBEE;
+            color: #C62828;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 8px;
+            touch-action: manipulation;
+        }
+
+        .order-summary {
+            background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .order-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .order-summary-row:last-child {
+            margin-bottom: 0;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .order-summary-label {
+            font-size: 15px;
+        }
+
+        .order-summary-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .order-summary-total {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .remark-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 15px;
+            resize: none;
+            margin-top: 12px;
+        }
+
+        .remark-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .preview-card {
+            background: white;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: "Courier New", "STSong", "SimSun", monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            max-width: 250px;
+            margin: 0 auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .preview-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+            letter-spacing: 1px;
+        }
+
+        .preview-divider {
+            border-top: 1px dashed #666;
+            margin: 10px 0;
+            padding: 4px 0;
+        }
+
+        .preview-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .preview-total {
+            font-weight: bold;
+            font-size: 13px;
+            color: #FF5722;
+        }
+
+        .preview-footer {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 10px;
+            color: #666;
+        }
+
+        .preview-info {
+            text-align: center;
+            font-size: 10px;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 20px;
+            cursor: pointer;
+            color: #757575;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+        }
+
+        .nav-item.active {
+            color: #2E7D32;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px 16px 0 0;
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2E7D32;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: #F5F5F5;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #424242;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .photo-upload {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #F5F5F5;
+            border: 2px dashed #BDBDBD;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .photo-upload:active {
+            border-color: #4CAF50;
+            background: #E8F5E9;
+        }
+
+        .photo-upload img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-upload-icon {
+            font-size: 48px;
+            color: #9E9E9E;
+            margin-bottom: 8px;
+        }
+
+        .photo-upload-text {
+            font-size: 14px;
+            color: #757575;
+        }
+
+        .unit-toggle {
+            display: flex;
+            gap: 10px;
+        }
+
+        .unit-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #E0E0E0;
+            background: white;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .unit-btn.active {
+            border-color: #2E7D32;
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .product-list-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #FAFAFA;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        .product-list-item:active {
+            background: #E8F5E9;
+        }
+
+        .product-list-item-image {
+            width: 60px;
+            height: 60px;
+            background: #E0E0E0;
+            border-radius: 8px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #9E9E9E;
+            overflow: hidden;
+        }
+
+        .product-list-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-list-item-info {
+            flex: 1;
+        }
+
+        .product-list-item-name {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .product-list-item-price {
+            font-size: 14px;
+            color: #FF5722;
+            font-weight: 600;
+        }
+
+        .product-list-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .edit-btn {
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+
+        .delete-btn {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #FF5722 0%, #FF7043 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card.green {
+            background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .date-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .order-history-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        .order-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .order-history-time {
+            font-size: 13px;
+            color: #757575;
+        }
+
+        .order-history-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #FF5722;
+        }
+
+        .order-history-items {
+            font-size: 14px;
+            color: #424242;
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9E9E9E;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 110px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #35bb3b;
+            color: white;
+            border: none;
+            font-size: 32px;
+            box-shadow: 0 4px 16px rgba(46,125,50,0.5);
+            cursor: pointer;
+            z-index: 1000;
+            touch-action: manipulation;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            will-change: transform;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        .print-receipt {
+            display: none;
+        }
+
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            .header, .nav, .fab, .main-content > .page:not(.print-receipt) {
+                display: none !important;
+            }
+
+            .print-receipt {
+                display: block !important;
+                padding: 0;
+                margin: 0;
+                width: 57mm;
+            }
+
+            .print-content {
+                width: 52mm;
+                max-width: 52mm;
+                margin: 0 auto;
+                padding: 3mm 2.5mm;
+                font-family: "Courier New", "STSong", "SimSun", monospace;
+                font-size: 11px;
+                line-height: 1.6;
+                white-space: pre-wrap;
+                word-break: break-all;
+            }
+
+            .print-title {
+                text-align: center;
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 8px;
+                letter-spacing: 1px;
+            }
+
+            .print-info {
+                text-align: center;
+                font-size: 10px;
+                margin-bottom: 6px;
+                color: #333;
+            }
+
+            .print-divider {
+                border-top: 1px dashed #666;
+                margin: 10px 0;
+                padding: 4px 0;
+            }
+
+            .print-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 6px;
+            }
+
+            .print-item {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 3px;
+            }
+
+            .print-total {
+                font-weight: bold;
+                font-size: 14px;
+                margin-top: 10px;
+            }
+
+            .print-remark {
+                font-style: italic;
+                margin-top: 10px;
+                border-top: 1px dashed #000;
+                padding-top: 10px;
+            }
+
+            .print-footer {
+                text-align: center;
+                margin-top: 15px;
+                font-size: 11px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .main-content {
+                padding: 80px 20px 90px;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🥬 蔬菜小票系统</h1>
+        <input type="text" class="shop-name-input" id="shopName" placeholder="店铺名称" value="新鲜蔬菜店">
+    </header>
+
+    <main class="main-content">
+        <div id="salesPage" class="page active">
+            <div class="card">
+                <div class="card-title">📋 当前销售单</div>
+                <div id="orderItems">
+                    <div class="empty-state" id="emptyOrder">
+                        <div class="empty-state-icon">🛒</div>
+                        <div class="empty-state-text">点击下方"+"添加商品</div>
+                    </div>
+                </div>
+
+                <textarea class="remark-input" id="orderRemark" placeholder="备注信息（可选）" rows="2"></textarea>
+
+                <div class="order-summary" id="orderSummary" style="display: none;">
+                    <div class="order-summary-row">
+                        <span class="order-summary-label">商品数量</span>
+                        <span class="order-summary-value" id="itemCount">0 件</span>
+                    </div>
+                    <div class="order-summary-row">
+                        <span class="order-summary-label">合计金额</span>
+                        <span class="order-summary-value order-summary-total" id="orderTotal">¥0.00</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="clearOrder()">🗑️ 清空</button>
+                    <button class="btn btn-primary btn-large" style="flex: 2;" onclick="openPrintPreview()">🖨️ 预览打印</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="productsPage" class="page">
+            <div class="card">
+                <div class="card-title">📦 商品列表</div>
+                <div id="productList">
+                    <div class="empty-state" id="emptyProducts">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-text">暂无商品，点击下方"+"添加</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="statsPage" class="page">
+            <div class="stat-card green">
+                <div class="stat-label" id="statDateLabel">今日营业额</div>
+                <div class="stat-value" id="dailyTotal">¥0.00</div>
+            </div>
+
+            <div class="date-selector">
+                <span>📅</span>
+                <input type="date" class="date-input" id="statsDate" onchange="loadStats()">
+                <button class="btn btn-secondary" onclick="loadStats()">查询</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 销售明细</div>
+                <div id="orderHistory">
+                    <div class="empty-state" id="emptyHistory">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-text">暂无销售记录</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">💾 数据管理</div>
+                <button class="btn btn-primary btn-full" style="margin-bottom: 10px;" onclick="exportData()">📤 导出数据</button>
+                <button class="btn btn-secondary btn-full" onclick="importData()">📥 导入数据</button>
+            </div>
+
+            <div class="card" style="background: #E3F2FD;">
+                <div style="font-size: 14px; color: #1976D2;">
+                    <strong>📱 使用提示：</strong><br>
+                    - 点击商品名称可编辑销售明细<br>
+                    - 定期备份数据以防丢失<br>
+                    - 导出的数据可用于迁移到其他设备
+                </div>
+            </div>
+        </div>
+
+        <div class="print-receipt">
+            <div class="print-content" id="printContent"></div>
+        </div>
+    </main>
+
+    <button class="fab" id="fabBtn" onclick="handleFabClick()">+</button>
+
+    <button class="fab" id="settingsBtn" style="bottom: 150px; background: #1976D2;" onclick="openShopSettings()">⚙️</button>
+    <button class="fab" id="helpBtn" style="bottom: 210px; background: #FF9800;" onclick="openHelpModal()">❓</button>
+
+    <nav class="nav">
+        <button class="nav-item active" onclick="showPage('sales')">
+            <span class="nav-icon">💰</span>
+            <span class="nav-label">销售</span>
+        </button>
+        <button class="nav-item" onclick="showPage('products')">
+            <span class="nav-icon">📦</span>
+            <span class="nav-label">商品</span>
+        </button>
+        <button class="nav-item" onclick="showPage('stats')">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">统计</span>
+        </button>
+    </nav>
+
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="modalTitle">添加商品</span>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">商品照片</label>
+                <div class="photo-upload" id="photoUpload" onclick="document.getElementById('photoInput').click()">
+                    <span class="photo-upload-icon">📷</span>
+                    <span class="photo-upload-text">点击上传照片</span>
+                </div>
+                <input type="file" id="photoInput" accept="image/*" style="display: none;" onchange="handlePhotoSelect(event)">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">商品名称</label>
+                <input type="text" class="form-input" id="productName" placeholder="例如：大白菜">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">单价</label>
+                <input type="number" class="form-input" id="productPrice" placeholder="0.00" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">计量单位</label>
+                <div class="unit-toggle">
+                    <button class="unit-btn active" data-unit="斤" onclick="selectUnit('斤')">斤</button>
+                    <button class="unit-btn" data-unit="公斤" onclick="selectUnit('公斤')">公斤</button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-full" onclick="saveProduct()">保存商品</button>
+        </div>
+    </div>
+
+    <div class="modal" id="selectProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">选择商品</span>
+                <button class="modal-close" onclick="closeSelectModal()">×</button>
+            </div>
+
+            <div class="product-grid" id="selectProductList">
+                <div class="empty-state" id="emptySelectProducts">
+                    <div class="empty-state-icon">📦</div>
+                    <div class="empty-state-text">暂无商品，请先添加</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="quickAddModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">添加商品</span>
+                <button class="modal-close" onclick="closeQuickAddModal()">×</button>
+            </div>
+
+            <input type="hidden" id="quickAddProductId">
+
+            <div class="form-group">
+                <label class="form-label">商品名称</label>
+                <input type="text" class="form-input" id="quickAddName" placeholder="商品名称" readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">原价</label>
+                <input type="text" class="form-input" id="quickAddOriginalPrice" placeholder="原价" readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">单价 (可修改，按原价则留空)</label>
+                <input type="number" class="form-input" id="quickAddPrice" placeholder="优惠价" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">数量</label>
+                <input type="number" class="form-input" id="quickAddQuantity" placeholder="0.0" step="0.1" min="0.1" value="1">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">计量单位</label>
+                <input type="text" class="form-input" id="quickAddUnit" placeholder="单位" readonly>
+            </div>
+
+            <button class="btn btn-primary btn-full" onclick="confirmQuickAdd()">添加到销售单</button>
+        </div>
+    </div>
+
+    <div class="modal" id="shopSettingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">店铺信息设置</span>
+                <button class="modal-close" onclick="closeShopSettings()">×</button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">店铺名称</label>
+                <input type="text" class="form-input" id="shopNameInput" placeholder="输入店铺名称">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">店铺地址</label>
+                <input type="text" class="form-input" id="shopAddress" placeholder="输入店铺地址">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">联系电话</label>
+                <input type="tel" class="form-input" id="shopPhone" placeholder="输入联系电话">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">店铺二维码（可选）</label>
+                <div class="photo-upload" id="qrcodeUpload" onclick="document.getElementById('qrcodeInput').click()">
+                    <span class="photo-upload-icon">📷</span>
+                    <span class="photo-upload-text">点击上传二维码</span>
+                </div>
+                <input type="file" id="qrcodeInput" accept="image/*" style="display: none;" onchange="handleQrcodeSelect(event)">
+            </div>
+
+            <button class="btn btn-primary btn-full" onclick="saveShopSettings()">保存设置</button>
+        </div>
+    </div>
+
+    <div class="modal" id="printPreviewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">打印预览</span>
+                <button class="modal-close" onclick="closePrintPreview()">×</button>
+            </div>
+
+            <div id="previewContent">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🖨️</div>
+                    <div class="empty-state-text">请先添加商品到销售单</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="closePrintPreview()">取消</button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="confirmPrint()">确认打印</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editOrderItemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">编辑商品信息</span>
+                <button class="modal-close" onclick="closeEditOrderItemModal()">×</button>
+            </div>
+
+            <input type="hidden" id="editItemIndex">
+
+            <div class="form-group">
+                <label class="form-label">商品名称</label>
+                <input type="text" class="form-input" id="editItemName" placeholder="商品名称">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">单价 (元)</label>
+                <input type="number" class="form-input" id="editItemPrice" placeholder="0.00" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">数量</label>
+                <input type="number" class="form-input" id="editItemQuantity" placeholder="0.0" step="0.1" min="0.1">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">计量单位</label>
+                <div class="unit-toggle">
+                    <button class="unit-btn active" data-unit="斤" onclick="selectEditUnit('斤')">斤</button>
+                    <button class="unit-btn" data-unit="公斤" onclick="selectEditUnit('公斤')">公斤</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-danger" style="flex: 1;" onclick="deleteOrderItem()">🗑️ 删除</button>
+                <button class="btn btn-secondary" style="flex: 1;" onclick="closeEditOrderItemModal()">取消</button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="saveOrderItemEdit()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="backupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">数据管理</span>
+                <button class="modal-close" onclick="closeBackupModal()">×</button>
+            </div>
+
+            <div style="padding: 10px 0;">
+                <button class="btn btn-primary btn-full" onclick="exportData()" style="margin-bottom: 10px;">📤 导出数据</button>
+                <button class="btn btn-secondary btn-full" onclick="importData()">📥 导入数据</button>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <div class="card" style="background: #FFF3E0; border: none;">
+                    <div style="font-size: 14px; color: #E65100;">
+                        <strong>💡 提示：</strong><br>
+                        - 导出数据会将所有商品和销售记录保存为JSON文件<br>
+                        - 导入数据会覆盖现有数据，请谨慎操作<br>
+                        - 建议定期备份数据
+                    </div>
+                </div>
+            </div>
+
+            <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+        </div>
+    </div>
+
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">使用说明</span>
+                <button class="modal-close" onclick="closeHelpModal()">×</button>
+            </div>
+
+            <div style="max-height: 60vh; overflow-y: auto;">
+                <h3 style="color: #2E7D32; margin-bottom: 10px;">💰 销售功能</h3>
+                <ul style="margin-left: 20px; margin-bottom: 20px; font-size: 14px; line-height: 1.8;">
+                    <li>点击"+"按钮添加商品</li>
+                    <li>选择商品后可设置优惠价</li>
+                    <li>点击商品名称可编辑明细</li>
+                    <li>点击×按钮删除商品</li>
+                    <li>点击"预览打印"查看小票效果</li>
+                    <li>确认后打印并统计营业额</li>
+                </ul>
+
+                <h3 style="color: #2E7D32; margin-bottom: 10px;">📦 商品管理</h3>
+                <ul style="margin-left: 20px; margin-bottom: 20px; font-size: 14px; line-height: 1.8;">
+                    <li>点击"+"按钮添加新商品</li>
+                    <li>上传商品照片方便识别</li>
+                    <li>设置单价和计量单位</li>
+                    <li>点击✏️编辑商品信息</li>
+                    <li>点击🗑️删除商品</li>
+                </ul>
+
+                <h3 style="color: #2E7D32; margin-bottom: 10px;">📊 统计功能</h3>
+                <ul style="margin-left: 20px; margin-bottom: 20px; font-size: 14px; line-height: 1.8;">
+                    <li>显示每日营业额统计</li>
+                    <li>选择日期查看历史数据</li>
+                    <li>查看当日销售明细</li>
+                    <li>导出数据进行备份</li>
+                    <li>导入数据恢复备份</li>
+                </ul>
+
+                <h3 style="color: #2E7D32; margin-bottom: 10px;">⚙️ 店铺设置</h3>
+                <ul style="margin-left: 20px; margin-bottom: 20px; font-size: 14px; line-height: 1.8;">
+                    <li>设置店铺名称</li>
+                    <li>设置店铺地址和电话</li>
+                    <li>上传店铺二维码</li>
+                    <li>信息会显示在小票上</li>
+                </ul>
+
+                <h3 style="color: #FF5722; margin-bottom: 10px;">💡 实用技巧</h3>
+                <ul style="margin-left: 20px; font-size: 14px; line-height: 1.8;">
+                    <li>熟客可输入优惠价</li>
+                    <li>定期导出数据备份</li>
+                    <li>打印后才会计入营业额</li>
+                    <li>清空不会影响统计数据</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        let currentOrder = [];
+        let dailySales = {};
+        let currentPhoto = '';
+        let selectedUnit = '斤';
+        let editingProductId = null;
+        let shopInfo = {
+            name: '新鲜蔬菜店',
+            address: '',
+            phone: '',
+            qrcode: ''
+        };
+        let editItemUnit = '斤';
+
+        function init() {
+            loadData();
+            setTodayDate();
+            renderProducts();
+            renderOrderItems();
+            renderOrderHistory();
+            loadStats();
+        }
+
+        function loadData() {
+            const savedProducts = localStorage.getItem('vegetableProducts');
+            const savedSales = localStorage.getItem('vegetableDailySales');
+            const savedShopInfo = localStorage.getItem('vegetableShopInfo');
+
+            if (savedProducts) {
+                products = JSON.parse(savedProducts);
+            } else {
+                products = [
+                    { id: '1', name: '大白菜', photo: '', price: 3.00, unit: '斤' },
+                    { id: '2', name: '西红柿', photo: '', price: 5.00, unit: '斤' },
+                    { id: '3', name: '黄瓜', photo: '', price: 4.00, unit: '斤' },
+                    { id: '4', name: '土豆', photo: '', price: 2.50, unit: '斤' },
+                    { id: '5', name: '胡萝卜', photo: '', price: 4.50, unit: '斤' }
+                ];
+                saveProducts();
+            }
+
+            if (savedSales) {
+                dailySales = JSON.parse(savedSales);
+            }
+
+            if (savedShopInfo) {
+                shopInfo = JSON.parse(savedShopInfo);
+            }
+            updateShopNameDisplay();
+        }
+
+        function updateShopNameDisplay() {
+            document.getElementById('shopName').value = shopInfo.name;
+        }
+
+        function saveProducts() {
+            localStorage.setItem('vegetableProducts', JSON.stringify(products));
+        }
+
+        function saveSales() {
+            localStorage.setItem('vegetableDailySales', JSON.stringify(dailySales));
+        }
+
+        function saveShopInfo() {
+            localStorage.setItem('vegetableShopInfo', JSON.stringify(shopInfo));
+        }
+
+        function openShopSettings() {
+            document.getElementById('shopNameInput').value = shopInfo.name;
+            document.getElementById('shopAddress').value = shopInfo.address;
+            document.getElementById('shopPhone').value = shopInfo.phone;
+            
+            const qrcodeUpload = document.getElementById('qrcodeUpload');
+            if (shopInfo.qrcode) {
+                qrcodeUpload.innerHTML = `<img src="${shopInfo.qrcode}" alt="店铺二维码">`;
+            } else {
+                qrcodeUpload.innerHTML = `
+                    <span class="photo-upload-icon">📷</span>
+                    <span class="photo-upload-text">点击上传二维码</span>
+                `;
+            }
+            
+            document.getElementById('shopSettingsModal').classList.add('active');
+        }
+
+        function closeShopSettings() {
+            document.getElementById('shopSettingsModal').classList.remove('active');
+        }
+
+        function openBackupModal() {
+            document.getElementById('backupModal').classList.add('active');
+        }
+
+        function closeBackupModal() {
+            document.getElementById('backupModal').classList.remove('active');
+        }
+
+        function openHelpModal() {
+            document.getElementById('helpModal').classList.add('active');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').classList.remove('active');
+        }
+
+        function exportData() {
+            const data = {
+                products: products,
+                dailySales: dailySales,
+                shopInfo: shopInfo,
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `蔬菜小票数据_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('数据导出成功！');
+        }
+
+        function importData() {
+            document.getElementById('importFileInput').click();
+        }
+
+        function handleImportFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.products) products = data.products;
+                    if (data.dailySales) dailySales = data.dailySales;
+                    if (data.shopInfo) shopInfo = data.shopInfo;
+
+                    saveProducts();
+                    saveSales();
+                    saveShopInfo();
+
+                    renderProducts();
+                    renderOrderItems();
+                    loadStats();
+                    updateShopNameDisplay();
+
+                    alert('数据导入成功！');
+                    closeBackupModal();
+                } catch (err) {
+                    alert('数据导入失败，请检查文件格式');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function editOrderItem(index) {
+            const item = currentOrder[index];
+            if (!item) return;
+
+            document.getElementById('editItemIndex').value = index;
+            document.getElementById('editItemName').value = item.name;
+            document.getElementById('editItemPrice').value = item.price;
+            document.getElementById('editItemQuantity').value = item.quantity;
+            editItemUnit = item.unit;
+
+            document.querySelectorAll('.unit-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.unit === editItemUnit);
+            });
+
+            document.getElementById('editOrderItemModal').classList.add('active');
+        }
+
+        function closeEditOrderItemModal() {
+            document.getElementById('editOrderItemModal').classList.remove('active');
+        }
+
+        function selectEditUnit(unit) {
+            editItemUnit = unit;
+            document.querySelectorAll('.unit-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.unit === unit);
+            });
+        }
+
+        function saveOrderItemEdit() {
+            const index = parseInt(document.getElementById('editItemIndex').value);
+            const name = document.getElementById('editItemName').value.trim();
+            const price = parseFloat(document.getElementById('editItemPrice').value);
+            const quantity = parseFloat(document.getElementById('editItemQuantity').value);
+
+            if (!name) {
+                alert('请输入商品名称');
+                return;
+            }
+
+            if (isNaN(price) || price <= 0) {
+                alert('请输入有效的单价');
+                return;
+            }
+
+            if (isNaN(quantity) || quantity <= 0) {
+                alert('请输入有效的数量');
+                return;
+            }
+
+            currentOrder[index] = {
+                ...currentOrder[index],
+                name,
+                price,
+                quantity,
+                unit: editItemUnit,
+                subtotal: price * quantity
+            };
+
+            renderOrderItems();
+            closeEditOrderItemModal();
+        }
+
+        function deleteOrderItem() {
+            const index = parseInt(document.getElementById('editItemIndex').value);
+            currentOrder.splice(index, 1);
+            renderOrderItems();
+            closeEditOrderItemModal();
+        }
+
+        function handleQrcodeSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    shopInfo.qrcode = e.target.result;
+                    const qrcodeUpload = document.getElementById('qrcodeUpload');
+                    qrcodeUpload.innerHTML = `<img src="${shopInfo.qrcode}" alt="店铺二维码">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveShopSettings() {
+            shopInfo.name = document.getElementById('shopNameInput').value.trim() || '新鲜蔬菜店';
+            shopInfo.address = document.getElementById('shopAddress').value.trim();
+            shopInfo.phone = document.getElementById('shopPhone').value.trim();
+            
+            saveShopInfo();
+            updateShopNameDisplay();
+            closeShopSettings();
+            alert('店铺信息已保存');
+        }
+
+        function setTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('statsDate').value = today;
+        }
+
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            if (page === 'sales') {
+                document.getElementById('salesPage').classList.add('active');
+                document.querySelector('.nav-item:nth-child(1)').classList.add('active');
+                document.getElementById('fabBtn').style.display = 'flex';
+            } else if (page === 'products') {
+                document.getElementById('productsPage').classList.add('active');
+                document.querySelector('.nav-item:nth-child(2)').classList.add('active');
+                document.getElementById('fabBtn').style.display = 'flex';
+            } else if (page === 'stats') {
+                document.getElementById('statsPage').classList.add('active');
+                document.querySelector('.nav-item:nth-child(3)').classList.add('active');
+                document.getElementById('fabBtn').style.display = 'none';
+            }
+        }
+
+        function handleFabClick() {
+            const activePage = document.querySelector('.page.active');
+            if (!activePage) return;
+            
+            const pageId = activePage.id;
+            if (pageId === 'salesPage') {
+                closeQuickAddModal();
+                closeSelectModal();
+                setTimeout(() => {
+                    openSelectProductModal();
+                }, 50);
+            } else if (pageId === 'productsPage') {
+                closeModal();
+                setTimeout(() => {
+                    openProductModal();
+                }, 50);
+            }
+        }
+
+        function renderProducts() {
+            const productList = document.getElementById('productList');
+            const emptyProducts = document.getElementById('emptyProducts');
+
+            if (products.length === 0) {
+                emptyProducts.style.display = 'block';
+                productList.innerHTML = '';
+                productList.appendChild(emptyProducts);
+                return;
+            }
+
+            emptyProducts.style.display = 'none';
+            productList.innerHTML = products.map(p => `
+                <div class="product-list-item" onclick="addToOrder('${p.id}')">
+                    <div class="product-list-item-image">
+                        ${p.photo ? `<img src="${p.photo}" alt="${p.name}">` : '🥬'}
+                    </div>
+                    <div class="product-list-item-info">
+                        <div class="product-list-item-name">${p.name}</div>
+                        <div class="product-list-item-price">¥${p.price.toFixed(2)}/${p.unit}</div>
+                    </div>
+                    <div class="product-list-item-actions" onclick="event.stopPropagation()">
+                        <button class="action-btn edit-btn" onclick="editProduct('${p.id}')">✏️</button>
+                        <button class="action-btn delete-btn" onclick="deleteProduct('${p.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderOrderItems() {
+            const orderItems = document.getElementById('orderItems');
+            const emptyOrder = document.getElementById('emptyOrder');
+            const orderSummary = document.getElementById('orderSummary');
+
+            if (!orderItems || !emptyOrder || !orderSummary) {
+                console.error('Element not found');
+                return;
+            }
+
+            if (currentOrder.length === 0) {
+                emptyOrder.style.display = 'block';
+                orderSummary.style.display = 'none';
+                
+                const orderItemElements = orderItems.querySelectorAll('.order-item');
+                orderItemElements.forEach(el => el.remove());
+                
+                return;
+            }
+
+            emptyOrder.style.display = 'none';
+            orderSummary.style.display = 'block';
+
+            const orderItemElements = orderItems.querySelectorAll('.order-item');
+            orderItemElements.forEach(el => el.remove());
+
+            const fragment = document.createDocumentFragment();
+            currentOrder.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'order-item';
+                div.innerHTML = `
+                    <div class="order-item-image">
+                        ${item.photo ? `<img src="${item.photo}" alt="${item.name}">` : '🥬'}
+                    </div>
+                    <div class="order-item-info">
+                        <div class="order-item-name" onclick="editOrderItem(${index})">${item.name}</div>
+                        <div class="order-item-price">¥${item.price.toFixed(2)}/${item.unit}</div>
+                    </div>
+                    <div class="order-item-controls">
+                        <button class="qty-btn" onclick="decreaseQty(${index})">−</button>
+                        <input type="number" class="qty-input" value="${item.quantity}" min="0.1" step="0.1" onchange="updateQty(${index}, this.value)">
+                        <button class="qty-btn" onclick="increaseQty(${index})">+</button>
+                    </div>
+                    <div class="order-item-total">¥${item.subtotal.toFixed(2)}</div>
+                    <button class="order-item-delete" onclick="removeFromOrder(${index})">×</button>
+                `;
+                fragment.appendChild(div);
+            });
+            orderItems.appendChild(fragment);
+
+            updateOrderSummary();
+        }
+
+        function updateOrderSummary() {
+            const totalAmount = currentOrder.reduce((sum, item) => sum + item.subtotal, 0);
+            const totalItems = currentOrder.reduce((sum, item) => sum + item.quantity, 0);
+
+            document.getElementById('itemCount').textContent = `${totalItems.toFixed(1)} 件`;
+            document.getElementById('orderTotal').textContent = `¥${totalAmount.toFixed(2)}`;
+        }
+
+        function openProductModal(product = null) {
+            editingProductId = product ? product.id : null;
+            document.getElementById('modalTitle').textContent = product ? '编辑商品' : '添加商品';
+            document.getElementById('productName').value = product ? product.name : '';
+            document.getElementById('productPrice').value = product ? product.price : '';
+            selectedUnit = product ? product.unit : '斤';
+
+            document.querySelectorAll('.unit-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.unit === selectedUnit);
+            });
+
+            const photoUpload = document.getElementById('photoUpload');
+            if (product && product.photo) {
+                currentPhoto = product.photo;
+                photoUpload.innerHTML = `<img src="${product.photo}" alt="商品照片">`;
+            } else {
+                currentPhoto = '';
+                photoUpload.innerHTML = `
+                    <span class="photo-upload-icon">📷</span>
+                    <span class="photo-upload-text">点击上传照片</span>
+                `;
+            }
+
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').classList.remove('active');
+            editingProductId = null;
+            currentPhoto = '';
+        }
+
+        function handlePhotoSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentPhoto = e.target.result;
+                    const photoUpload = document.getElementById('photoUpload');
+                    photoUpload.innerHTML = `<img src="${currentPhoto}" alt="商品照片">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function selectUnit(unit) {
+            selectedUnit = unit;
+            document.querySelectorAll('.unit-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.unit === unit);
+            });
+        }
+
+        function saveProduct() {
+            const nameInput = document.getElementById('productName');
+            const priceInput = document.getElementById('productPrice');
+            const name = nameInput.value.trim();
+            const price = parseFloat(priceInput.value);
+
+            if (!name) {
+                alert('请输入商品名称');
+                nameInput.focus();
+                return;
+            }
+
+            if (isNaN(price) || price <= 0) {
+                alert('请输入有效的单价（必须大于0）');
+                priceInput.focus();
+                return;
+            }
+
+            if (editingProductId) {
+                const index = products.findIndex(p => p.id === editingProductId);
+                if (index !== -1) {
+                    products[index] = {
+                        ...products[index],
+                        name,
+                        photo: currentPhoto,
+                        price,
+                        unit: selectedUnit
+                    };
+                }
+            } else {
+                const newProduct = {
+                    id: Date.now().toString(),
+                    name,
+                    photo: currentPhoto,
+                    price,
+                    unit: selectedUnit
+                };
+                products.push(newProduct);
+            }
+
+            saveProducts();
+            renderProducts();
+            clearForm();
+            closeModal();
+        }
+
+        function clearForm() {
+            document.getElementById('productName').value = '';
+            document.getElementById('productPrice').value = '';
+            currentPhoto = '';
+            selectedUnit = '斤';
+            editingProductId = null;
+            document.getElementById('photoUpload').innerHTML = `
+                <span class="photo-upload-icon">📷</span>
+                <span class="photo-upload-text">点击上传照片</span>
+            `;
+            document.querySelectorAll('.unit-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.unit === '斤');
+            });
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (product) {
+                openProductModal(product);
+            }
+        }
+
+        function deleteProduct(id) {
+            if (confirm('确定要删除这个商品吗？')) {
+                products = products.filter(p => p.id !== id);
+                saveProducts();
+                renderProducts();
+            }
+        }
+
+        function openSelectProductModal() {
+            const selectProductList = document.getElementById('selectProductList');
+            const emptySelectProducts = document.getElementById('emptySelectProducts');
+
+            if (!selectProductList) {
+                console.error('selectProductList element not found');
+                return;
+            }
+
+            if (products.length === 0) {
+                if (emptySelectProducts) {
+                    selectProductList.innerHTML = '';
+                    selectProductList.appendChild(emptySelectProducts);
+                    emptySelectProducts.style.display = 'block';
+                } else {
+                    selectProductList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <div class="empty-state-text">暂无商品，请先添加商品</div>
+                        </div>
+                    `;
+                }
+            } else {
+                if (emptySelectProducts) {
+                    emptySelectProducts.style.display = 'none';
+                }
+                selectProductList.innerHTML = products.map(p => `
+                    <div class="product-item" onclick="addToOrder('${p.id}')">
+                        <div class="product-image">
+                            ${p.photo ? `<img src="${p.photo}" alt="${p.name}">` : '🥬'}
+                        </div>
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-price">¥${p.price.toFixed(2)}/${p.unit}</div>
+                    </div>
+                `).join('');
+            }
+
+            const modal = document.getElementById('selectProductModal');
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        function closeSelectModal() {
+            const modal = document.getElementById('selectProductModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function addToOrder(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            document.getElementById('quickAddProductId').value = product.id;
+            document.getElementById('quickAddName').value = product.name;
+            document.getElementById('quickAddOriginalPrice').value = `¥${product.price.toFixed(2)}/${product.unit}`;
+            document.getElementById('quickAddUnit').value = product.unit;
+            document.getElementById('quickAddPrice').value = '';
+            document.getElementById('quickAddQuantity').value = '1';
+
+            closeSelectModal();
+            document.getElementById('quickAddModal').classList.add('active');
+        }
+
+        function closeQuickAddModal() {
+            document.getElementById('quickAddModal').classList.remove('active');
+            document.getElementById('quickAddProductId').value = '';
+            document.getElementById('quickAddName').value = '';
+            document.getElementById('quickAddOriginalPrice').value = '';
+            document.getElementById('quickAddPrice').value = '';
+            document.getElementById('quickAddQuantity').value = '1';
+            document.getElementById('quickAddUnit').value = '';
+        }
+
+        function confirmQuickAdd() {
+            const productId = document.getElementById('quickAddProductId').value;
+            const product = products.find(p => p.id === productId);
+            if (!product) {
+                alert('请先选择商品');
+                return;
+            }
+
+            const customPriceInput = document.getElementById('quickAddPrice').value;
+            const customPrice = customPriceInput.trim() === '' ? NaN : parseFloat(customPriceInput);
+            const quantityInput = document.getElementById('quickAddQuantity').value;
+            const quantity = parseFloat(quantityInput);
+            const price = isNaN(customPrice) || customPrice <= 0 ? product.price : customPrice;
+
+            if (isNaN(quantity) || quantity <= 0) {
+                alert('请输入有效的数量');
+                document.getElementById('quickAddQuantity').focus();
+                return;
+            }
+
+            const existingIndex = currentOrder.findIndex(item => item.productId === productId && item.price === price);
+            if (existingIndex !== -1) {
+                currentOrder[existingIndex].quantity += quantity;
+                currentOrder[existingIndex].subtotal = currentOrder[existingIndex].quantity * currentOrder[existingIndex].price;
+            } else {
+                currentOrder.push({
+                    productId: product.id,
+                    name: product.name,
+                    photo: product.photo,
+                    price: price,
+                    unit: product.unit,
+                    quantity: quantity,
+                    subtotal: price * quantity,
+                    originalPrice: !isNaN(customPrice) && customPrice > 0 ? product.price : null
+                });
+            }
+
+            renderOrderItems();
+            closeQuickAddModal();
+        }
+
+        function increaseQty(index) {
+            currentOrder[index].quantity += 0.5;
+            currentOrder[index].subtotal = currentOrder[index].quantity * currentOrder[index].price;
+            renderOrderItems();
+        }
+
+        function decreaseQty(index) {
+            if (currentOrder[index].quantity > 0.5) {
+                currentOrder[index].quantity -= 0.5;
+                currentOrder[index].subtotal = currentOrder[index].quantity * currentOrder[index].price;
+                renderOrderItems();
+            }
+        }
+
+        function updateQty(index, value) {
+            const qty = parseFloat(value);
+            if (qty > 0) {
+                currentOrder[index].quantity = qty;
+                currentOrder[index].subtotal = qty * currentOrder[index].price;
+                renderOrderItems();
+            }
+        }
+
+        function removeFromOrder(index) {
+            currentOrder.splice(index, 1);
+            renderOrderItems();
+        }
+
+        function clearOrder() {
+            if (currentOrder.length === 0) {
+                alert('当前销售单为空');
+                return;
+            }
+            currentOrder = [];
+            document.getElementById('orderRemark').value = '';
+            renderOrderItems();
+        }
+
+        function openPrintPreview() {
+            if (currentOrder.length === 0) {
+                alert('请先添加商品');
+                return;
+            }
+
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = generateReceiptHTML(true);
+            document.getElementById('printPreviewModal').classList.add('active');
+        }
+
+        function closePrintPreview() {
+            document.getElementById('printPreviewModal').classList.remove('active');
+        }
+
+        function confirmPrint() {
+            closePrintPreview();
+            printReceipt();
+        }
+
+        function generateReceiptHTML(isPreview) {
+            const remark = document.getElementById('orderRemark').value.trim();
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('zh-CN');
+            const timeStr = now.toLocaleTimeString('zh-CN');
+            const totalAmount = currentOrder.reduce((sum, item) => sum + item.subtotal, 0);
+
+            const shopAddressLine = shopInfo.address ? `<div class="${isPreview ? 'preview-info' : 'print-info'}">地址: ${shopInfo.address}</div>` : '';
+            const shopPhoneLine = shopInfo.phone ? `<div class="${isPreview ? 'preview-info' : 'print-info'}">电话: ${shopInfo.phone}</div>` : '';
+            const dividerClass = isPreview ? 'preview-divider' : 'print-divider';
+            const titleClass = isPreview ? 'preview-title' : 'print-title';
+
+            const itemsHTML = currentOrder.map(item => `
+                <div style="display: flex; justify-content: space-between; line-height: 1.5; margin-bottom: 6px;">
+                    <span style="flex: 1;">${item.name}</span>
+                    <span style="margin: 0 4px;">${item.quantity}${item.unit}</span>
+                    <span style="min-width: 45px; text-align: right;">¥${item.subtotal.toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            const qrcodeHTML = shopInfo.qrcode ? `
+                <div class="${dividerClass}"></div>
+                <div style="text-align: center; margin-top: 8px;">
+                    <img src="${shopInfo.qrcode}" alt="二维码" style="width: 80px; height: 80px; border: 1px solid #eee;" />
+                </div>
+                <div style="text-align: center; font-size: 9px; margin-top: 4px;">扫码关注</div>
+            ` : '';
+
+            return `
+                <div class="${isPreview ? 'preview-card' : ''}">
+                    <div class="${titleClass}">${shopInfo.name}</div>
+                    <div class="${dividerClass}"></div>
+                    ${shopAddressLine}
+                    ${shopPhoneLine}
+                    <div class="${isPreview ? 'preview-info' : 'print-info'}">${dateStr} ${timeStr}</div>
+                    <div class="${dividerClass}"></div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px;">
+                        <span>商品</span>
+                        <span>金额</span>
+                    </div>
+                    ${itemsHTML}
+                    <div class="${dividerClass}"></div>
+                    ${remark ? `<div style="padding: 4px 0; font-size: 10px;">备注: ${remark}</div>` : ''}
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; padding-top: 4px;">
+                        <span>合计:</span>
+                        <span>¥${totalAmount.toFixed(2)} 元</span>
+                    </div>
+                    ${qrcodeHTML}
+                    <div class="${dividerClass}"></div>
+                    <div style="text-align: center; font-size: 10px; padding-top: 4px;">
+                        谢谢惠顾<br>
+                        欢迎下次光临
+                    </div>
+                    <div style="text-align: center; font-size: 9px; margin-top: 8px; margin-bottom: 15px;">
+                        -------------------
+                    </div>
+                </div>
+            `;
+        }
+
+        function printReceipt() {
+            const printContent = document.getElementById('printContent');
+            printContent.innerHTML = generateReceiptHTML(false);
+
+            const remark = document.getElementById('orderRemark').value.trim();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN');
+            const totalAmount = currentOrder.reduce((sum, item) => sum + item.subtotal, 0);
+
+            const orderData = {
+                id: Date.now().toString(),
+                date: now.toISOString().split('T')[0],
+                time: timeStr,
+                items: [...currentOrder],
+                total: totalAmount,
+                remark: remark
+            };
+
+            const dateKey = orderData.date;
+            if (!dailySales[dateKey]) {
+                dailySales[dateKey] = { totalAmount: 0, orders: [] };
+            }
+            dailySales[dateKey].totalAmount += totalAmount;
+            dailySales[dateKey].orders.push(orderData);
+            saveSales();
+
+            renderOrderHistory();
+            loadStats();
+
+            window.print();
+
+            currentOrder = [];
+            document.getElementById('orderRemark').value = '';
+            renderOrderItems();
+        }
+
+        function loadStats() {
+            const selectedDate = document.getElementById('statsDate').value;
+            const dateLabel = document.getElementById('statDateLabel');
+            const dailyTotal = document.getElementById('dailyTotal');
+
+            if (selectedDate === new Date().toISOString().split('T')[0]) {
+                dateLabel.textContent = '今日营业额';
+            } else {
+                dateLabel.textContent = `${selectedDate} 营业额`;
+            }
+
+            const dayData = dailySales[selectedDate];
+            if (dayData) {
+                dailyTotal.textContent = `¥${dayData.totalAmount.toFixed(2)}`;
+            } else {
+                dailyTotal.textContent = '¥0.00';
+            }
+
+            renderOrderHistory();
+        }
+
+        function renderOrderHistory() {
+            const selectedDate = document.getElementById('statsDate').value;
+            const orderHistory = document.getElementById('orderHistory');
+            const emptyHistory = document.getElementById('emptyHistory');
+
+            if (!orderHistory) return;
+
+            const dayData = dailySales[selectedDate];
+            if (!dayData || dayData.orders.length === 0) {
+                if (emptyHistory) {
+                    emptyHistory.style.display = 'block';
+                    orderHistory.innerHTML = '';
+                    orderHistory.appendChild(emptyHistory);
+                } else {
+                    orderHistory.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <div class="empty-state-text">暂无销售记录</div>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            if (emptyHistory) {
+                emptyHistory.style.display = 'none';
+            }
+            orderHistory.innerHTML = dayData.orders.map((order, index) => `
+                <div class="order-history-item">
+                    <div class="order-history-header">
+                        <span class="order-history-time">🕐 ${order.time}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="order-history-amount">¥${order.total.toFixed(2)}</span>
+                            <button class="delete-history-btn" onclick="deleteHistoryOrder('${selectedDate}', ${index})" style="padding: 4px 8px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 12px;">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="order-history-items">
+                        ${order.items.map(item => `${item.name} ${item.quantity}${item.unit}`).join('，')}
+                        ${order.remark ? `<br>备注: ${order.remark}` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteHistoryOrder(dateKey, orderIndex) {
+            if (!confirm('确定要删除这条销售记录吗？')) return;
+            
+            const order = dailySales[dateKey].orders[orderIndex];
+            dailySales[dateKey].totalAmount -= order.total;
+            dailySales[dateKey].orders.splice(orderIndex, 1);
+            
+            if (dailySales[dateKey].orders.length === 0) {
+                delete dailySales[dateKey];
+            }
+            
+            saveSales();
+            loadStats();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(() => console.log('Service Worker registered'))
+                .catch(err => console.error('Service Worker registration failed:', err));
+        }
+    </script>
+</body>
+</html>

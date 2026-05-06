@@ -1,0 +1,42 @@
+{
+    "name": "蔬菜小票打印系统",
+    "short_name": "蔬菜小票",
+    "description": "专为iPad设计的蔬菜销售小票打印系统",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#F5F5F5",
+    "theme_color": "#2E7D32",
+    "icons": [
+        {
+            "src": "icons/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/icon-120x120.png",
+            "sizes": "120x120",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/icon-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/icon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/icon-180x180.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
