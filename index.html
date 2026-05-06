@@ -818,6 +818,78 @@
             transform: scale(0.95);
         }
 
+        /* 折叠式 FAB 按钮组 */
+        .fab-group {
+            position: fixed;
+            bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+            right: 20px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+        }
+        .fab-main {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #35bb3b;
+            color: white;
+            border: none;
+            font-size: 28px;
+            box-shadow: 0 4px 16px rgba(46,125,50,0.5);
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fab-main:active {
+            transform: scale(0.95);
+        }
+        .fab-main.active {
+            transform: rotate(45deg);
+            background: #d32f2f;
+        }
+        .fab-secondary {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            font-size: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: transform 0.2s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.5);
+            pointer-events: none;
+        }
+        .fab-secondary span {
+            color: white;
+        }
+        #settingsBtn.fab-secondary {
+            background: #1976D2;
+        }
+        #helpBtn.fab-secondary {
+            background: #FF9800;
+        }
+        .fab-group.open .fab-secondary {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+        .fab-group.open .fab-secondary:nth-last-child(2) {
+            transition-delay: 0.05s;
+        }
+        .fab-group.open .fab-secondary:nth-last-child(3) {
+            transition-delay: 0.1s;
+        }
+
         .print-receipt {
             display: none;
         }
@@ -905,6 +977,93 @@
             }
         }
 
+        /* 销售页面快速选品区域 */
+        .sales-product-section {
+            margin-bottom: 15px;
+        }
+        .sales-product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .sales-product-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2E7D32;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sales-product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 8px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        .sales-product-item {
+            background: #FAFAFA;
+            border-radius: 10px;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 2px solid transparent;
+            touch-action: manipulation;
+            text-align: center;
+            position: relative;
+        }
+        .sales-product-item:active {
+            background: #E8F5E9;
+            border-color: #4CAF50;
+            transform: scale(0.95);
+        }
+        .sales-product-item .sales-product-image {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #E0E0E0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #9E9E9E;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+        .sales-product-item .sales-product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .sales-product-item .sales-product-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #212121;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+        .sales-product-item .sales-product-price {
+            font-size: 11px;
+            color: #FF5722;
+            font-weight: 600;
+        }
+        .sales-product-search {
+            padding: 7px 12px;
+            border: 1px solid #E0E0E0;
+            border-radius: 20px;
+            font-size: 13px;
+            width: 150px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .sales-product-search:focus {
+            border-color: #4CAF50;
+        }
+
         @media (min-width: 768px) {
             .main-content {
                 padding: calc(80px + env(safe-area-inset-top, 0px)) 20px calc(90px + env(safe-area-inset-bottom, 0px));
@@ -938,6 +1097,14 @@
                 height: 40px;
                 font-size: 18px;
             }
+
+            .sales-product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                max-height: 320px;
+            }
+            .sales-product-search {
+                width: 200px;
+            }
         }
 
         .search-input {
@@ -963,7 +1130,39 @@
             color: #424242;
             background: white;
         }
+        /* 打印预览区域 */
+        #previewContentWrapper {
+            position: relative;
+        }
+        #previewContent {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .preview-card {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+        }
+        .preview-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .preview-info {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .preview-divider {
+            border-top: 1px dashed #999;
+            margin: 8px 0;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <header class="header">
@@ -973,12 +1172,27 @@
 
     <main class="main-content">
         <div id="salesPage" class="page active">
+            <!-- 快速选品区域 -->
+            <div class="card sales-product-section">
+                <div class="sales-product-header">
+                    <span class="sales-product-title">🛒 快速选品</span>
+                    <input type="text" class="sales-product-search" id="salesProductSearch" placeholder="🔍 搜索商品..." oninput="renderSalesProducts()">
+                </div>
+                <div class="sales-product-grid" id="salesProductGrid">
+                    <div class="empty-state" id="emptySalesProducts" style="padding: 20px 10px;">
+                        <div class="empty-state-icon" style="font-size: 40px;">📦</div>
+                        <div class="empty-state-text" style="font-size: 13px;">暂无商品，请先到商品页面添加</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 当前销售单 -->
             <div class="card">
                 <div class="card-title">📋 当前销售单</div>
                 <div id="orderItems">
                     <div class="empty-state" id="emptyOrder">
                         <div class="empty-state-icon">🛒</div>
-                        <div class="empty-state-text">点击下方"+"添加商品</div>
+                        <div class="empty-state-text">点击上方商品快速添加</div>
                     </div>
                 </div>
 
@@ -1069,10 +1283,18 @@
         </div>
     </main>
 
-    <button class="fab" id="fabBtn" onclick="handleFabClick()">+</button>
-
-    <button class="fab" id="settingsBtn" style="bottom: calc(150px + env(safe-area-inset-bottom, 0px)); background: #1976D2;" onclick="openShopSettings()">⚙️</button>
-    <button class="fab" id="helpBtn" style="bottom: calc(210px + env(safe-area-inset-bottom, 0px)); background: #FF9800;" onclick="openHelpModal()">❓</button>
+    <!-- 折叠式 FAB 按钮组 -->
+    <div class="fab-group" id="fabGroup">
+        <button class="fab fab-secondary" id="helpBtn" onclick="openHelpModal()" title="帮助">
+            <span>?</span>
+        </button>
+        <button class="fab fab-secondary" id="settingsBtn" onclick="openShopSettings()" title="设置">
+            <span>⚙</span>
+        </button>
+        <button class="fab fab-main" id="fabBtn" onclick="toggleFabMenu()">
+            <span class="fab-icon">+</span>
+        </button>
+    </div>
 
     <nav class="nav">
         <button class="nav-item active" onclick="showPage('sales')">
@@ -1221,20 +1443,27 @@
     </div>
 
     <div class="modal" id="printPreviewModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
                 <span class="modal-title">打印预览</span>
                 <button class="modal-close" onclick="closePrintPreview()">×</button>
             </div>
 
-            <div id="previewContent">
-                <div class="empty-state">
-                    <div class="empty-state-icon">🖨️</div>
-                    <div class="empty-state-text">请先添加商品到销售单</div>
+            <div id="previewContentWrapper" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <div id="previewContent">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🖨️</div>
+                        <div class="empty-state-text">请先添加商品到销售单</div>
+                    </div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" style="flex: 1; min-width: 80px;" onclick="savePreviewAsImage()">📷 保存图片</button>
+                <button class="btn btn-secondary" style="flex: 1; min-width: 80px;" onclick="exportReceiptAsText()">📝 导出文本</button>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
                 <button class="btn btn-secondary" style="flex: 1;" onclick="closePrintPreview()">取消</button>
                 <button class="btn btn-primary" style="flex: 1;" onclick="confirmPrint()">确认打印</button>
             </div>
@@ -1382,6 +1611,7 @@
             loadData();
             setTodayDate();
             renderProducts();
+            renderSalesProducts();
             renderOrderItems();
             renderOrderHistory();
             loadStats();
@@ -1507,6 +1737,7 @@
                     saveShopInfo();
 
                     renderProducts();
+                    renderSalesProducts();
                     renderOrderItems();
                     loadStats();
                     updateShopNameDisplay();
@@ -1622,30 +1853,63 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
+            const fabGroup = document.getElementById('fabGroup');
+            
             if (page === 'sales') {
                 document.getElementById('salesPage').classList.add('active');
                 document.querySelector('.nav-item:nth-child(1)').classList.add('active');
-                document.getElementById('fabBtn').style.display = 'flex';
+                if (fabGroup) fabGroup.style.display = 'flex';
             } else if (page === 'products') {
                 document.getElementById('productsPage').classList.add('active');
                 document.querySelector('.nav-item:nth-child(2)').classList.add('active');
-                document.getElementById('fabBtn').style.display = 'flex';
+                if (fabGroup) fabGroup.style.display = 'flex';
             } else if (page === 'stats') {
                 document.getElementById('statsPage').classList.add('active');
                 document.querySelector('.nav-item:nth-child(3)').classList.add('active');
-                document.getElementById('fabBtn').style.display = 'none';
+                if (fabGroup) fabGroup.style.display = 'none';
+            }
+            
+            // 切换页面时关闭 FAB 菜单
+            closeFabMenu();
+        }
+
+        let fabMenuOpen = false;
+
+        function toggleFabMenu() {
+            const fabGroup = document.getElementById('fabGroup');
+            const fabBtn = document.getElementById('fabBtn');
+            fabMenuOpen = !fabMenuOpen;
+            
+            if (fabMenuOpen) {
+                fabGroup.classList.add('open');
+                fabBtn.classList.add('active');
+            } else {
+                fabGroup.classList.remove('open');
+                fabBtn.classList.remove('active');
             }
         }
 
+        function closeFabMenu() {
+            const fabGroup = document.getElementById('fabGroup');
+            const fabBtn = document.getElementById('fabBtn');
+            fabMenuOpen = false;
+            fabGroup.classList.remove('open');
+            fabBtn.classList.remove('active');
+        }
+
         function handleFabClick() {
+            // 如果菜单已展开，先收起菜单
+            if (fabMenuOpen) {
+                closeFabMenu();
+                return;
+            }
+            
             const activePage = document.querySelector('.page.active');
             if (!activePage) return;
             
             const pageId = activePage.id;
             if (pageId === 'salesPage') {
-                closeQuickAddModal();
-                closeSelectModal();
-                openSelectProductModal();
+                openProductModal();
             } else if (pageId === 'productsPage') {
                 closeModal();
                 openProductModal();
@@ -1708,6 +1972,47 @@
                 fragment.appendChild(div);
             });
             productList.appendChild(fragment);
+        }
+
+        function renderSalesProducts() {
+            const grid = document.getElementById('salesProductGrid');
+            const emptyEl = document.getElementById('emptySalesProducts');
+            const searchInput = document.getElementById('salesProductSearch');
+            const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            const filtered = keyword
+                ? products.filter(p => p.name.toLowerCase().includes(keyword))
+                : products;
+
+            // 移除旧的商品项
+            grid.querySelectorAll('.sales-product-item').forEach(el => el.remove());
+
+            if (filtered.length === 0) {
+                if (emptyEl) {
+                    emptyEl.style.display = 'block';
+                    const textEl = emptyEl.querySelector('.empty-state-text');
+                    if (textEl) textEl.textContent = keyword ? '未找到匹配商品' : '暂无商品，请先到商品页面添加';
+                }
+                return;
+            }
+
+            if (emptyEl) emptyEl.style.display = 'none';
+
+            const fragment = document.createDocumentFragment();
+            filtered.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'sales-product-item';
+                div.onclick = () => addToOrder(p.id);
+                div.innerHTML = `
+                    <div class="sales-product-image">
+                        ${p.photo ? `<img src="${p.photo}" alt="${p.name}">` : '🥬'}
+                    </div>
+                    <div class="sales-product-name">${p.name}</div>
+                    <div class="sales-product-price">¥${p.price.toFixed(2)}/${p.unit}</div>
+                `;
+                fragment.appendChild(div);
+            });
+            grid.appendChild(fragment);
         }
 
         function renderOrderItems() {
@@ -1865,6 +2170,7 @@
 
             saveProducts();
             renderProducts();
+            renderSalesProducts();
             clearForm();
             closeModal();
             showToast(editingProductId ? '商品已更新' : '商品已添加');
@@ -1897,6 +2203,7 @@
                 products = products.filter(p => p.id !== id);
                 saveProducts();
                 renderProducts();
+                renderSalesProducts();
                 // 同步清理当前销售单中包含该商品的条目
                 const beforeLen = currentOrder.length;
                 currentOrder = currentOrder.filter(item => item.productId !== id);
@@ -2018,6 +2325,7 @@
                 products = products.filter(p => p.id !== id);
                 saveProducts();
                 renderProducts();
+                renderSalesProducts();
                 // 同步清理当前销售单中包含该商品的条目
                 const beforeLen = currentOrder.length;
                 currentOrder = currentOrder.filter(item => item.productId !== id);
@@ -2041,7 +2349,9 @@
             document.getElementById('quickAddPrice').value = '';
             document.getElementById('quickAddQuantity').value = '1';
 
+            // 关闭可能打开的选择弹窗
             closeSelectModal();
+            // 打开数量输入弹窗
             document.getElementById('quickAddModal').classList.add('active');
         }
 
@@ -2152,6 +2462,125 @@
         function confirmPrint() {
             closePrintPreview();
             printReceipt();
+        }
+
+        async function savePreviewAsImage() {
+            const previewContent = document.getElementById('previewContent');
+            const wrapper = document.getElementById('previewContentWrapper');
+
+            if (!previewContent || previewContent.querySelector('.empty-state')) {
+                showToast('没有可保存的内容');
+                return;
+            }
+
+            try {
+                showToast('正在生成图片...');
+
+                // 使用 html2canvas 截图
+                const canvas = await html2canvas(previewContent, {
+                    backgroundColor: '#ffffff',
+                    scale: 2, // 高清截图
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false
+                });
+
+                // 转换为图片并下载
+                const link = document.createElement('a');
+                const now = new Date();
+                const filename = `小票_${shopInfo.name}_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.png`;
+
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                showToast('图片已保存');
+            } catch (err) {
+                console.error('保存图片失败:', err);
+                showToast('保存失败，请重试');
+            }
+        }
+
+        function exportReceiptAsText() {
+            if (currentOrder.length === 0) {
+                showToast('没有可导出的内容');
+                return;
+            }
+
+            const remark = document.getElementById('orderRemark').value.trim();
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('zh-CN');
+            const timeStr = now.toLocaleTimeString('zh-CN');
+            const totalAmount = currentOrder.reduce((sum, item) => sum + item.subtotal, 0);
+
+            // 构建文本内容
+            let textContent = '';
+            textContent += '╔══════════════════════╗\n';
+            textContent += `║ ${centerText(shopInfo.name, 20)} ║\n`;
+            textContent += '╠══════════════════════╣\n';
+
+            if (shopInfo.address) {
+                textContent += `║ 地址: ${padRight(shopInfo.address, 16)}║\n`;
+            }
+            if (shopInfo.phone) {
+                textContent += `║ 电话: ${padRight(shopInfo.phone, 16)}║\n`;
+            }
+
+            textContent += `║ ${padRight(dateStr + ' ' + timeStr, 20)}║\n`;
+            textContent += '╠══════════════════════╣\n';
+            textContent += '║ 商品        数量   金额║\n';
+            textContent += '╠══════════════════════╣\n';
+
+            currentOrder.forEach(item => {
+                const name = padRight(item.name.substring(0, 8), 8);
+                const qty = padLeft(item.quantity + item.unit, 6);
+                const price = padLeft('¥' + item.subtotal.toFixed(2), 7);
+                textContent += `║ ${name} ${qty}${price} ║\n`;
+            });
+
+            textContent += '╠══════════════════════╣\n';
+
+            if (remark) {
+                textContent += `║ 备注: ${padRight(remark, 15)}║\n`;
+            }
+
+            textContent += `║ 合计: ${padLeft('¥' + totalAmount.toFixed(2) + ' 元', 15)}║\n`;
+            textContent += '╠══════════════════════╣\n';
+            textContent += `║ ${centerText('谢谢惠顾', 20)} ║\n`;
+            textContent += `║ ${centerText('欢迎下次光临', 20)} ║\n`;
+            textContent += '╚══════════════════════╝\n';
+
+            // 创建并下载文本文件
+            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            const filename = `小票_${shopInfo.name}_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}.txt`;
+
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+
+            URL.revokeObjectURL(link.href);
+            showToast('文本已导出');
+        }
+
+        // 辅助函数：文本居中
+        function centerText(text, width) {
+            const padding = width - text.length;
+            const left = Math.floor(padding / 2);
+            const right = padding - left;
+            return ' '.repeat(left) + text + ' '.repeat(right);
+        }
+
+        // 辅助函数：文本左填充
+        function padLeft(text, width) {
+            const str = String(text);
+            return str.length >= width ? str : ' '.repeat(width - str.length) + str;
+        }
+
+        // 辅助函数：文本右填充
+        function padRight(text, width) {
+            const str = String(text);
+            return str.length >= width ? str.substring(0, width) : str + ' '.repeat(width - str.length);
         }
 
         function generateReceiptHTML(isPreview) {
@@ -2330,6 +2759,14 @@
             saveSales();
             loadStats();
         }
+
+        // 点击页面其他区域关闭 FAB 菜单
+        document.addEventListener('click', function(e) {
+            const fabGroup = document.getElementById('fabGroup');
+            if (fabGroup && fabMenuOpen && !fabGroup.contains(e.target)) {
+                closeFabMenu();
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', init);
 
