@@ -29,6 +29,7 @@
             background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
             color: white;
             padding: 15px 20px;
+            padding-top: calc(15px + env(safe-area-inset-top, 0px));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -61,16 +62,24 @@
 
         .main-content {
             padding: 70px 15px 80px;
+            padding-top: calc(70px + env(safe-area-inset-top, 0px));
+            padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
             max-width: 800px;
             margin: 0 auto;
         }
 
         .page {
             display: none;
+            animation: fadeIn 0.2s ease;
         }
 
         .page.active {
             display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .card {
@@ -104,6 +113,11 @@
             cursor: pointer;
             transition: all 0.2s;
             touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+            transition: transform 0.1s;
         }
 
         .btn-primary {
@@ -217,6 +231,12 @@
             align-items: center;
             padding: 12px 0;
             border-bottom: 1px solid #E0E0E0;
+            animation: slideIn 0.2s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .order-item:last-child {
@@ -374,6 +394,7 @@
             display: flex;
             justify-content: space-around;
             padding: 10px 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             z-index: 100;
         }
@@ -459,7 +480,7 @@
         }
 
         .modal {
-            display: none;
+            display: flex;
             position: fixed;
             top: 0;
             left: 0;
@@ -470,10 +491,14 @@
             align-items: flex-end;
             justify-content: center;
             padding: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
         }
 
         .modal.active {
-            display: flex;
+            opacity: 1;
+            visibility: visible;
         }
 
         .modal-content {
@@ -484,6 +509,13 @@
             max-height: 85vh;
             overflow-y: auto;
             padding: 20px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
         }
 
         .modal-header {
@@ -762,7 +794,7 @@
 
         .fab {
             position: fixed;
-            bottom: 110px;
+            bottom: calc(110px + env(safe-area-inset-bottom, 0px));
             right: 20px;
             width: 60px;
             height: 60px;
@@ -875,19 +907,68 @@
 
         @media (min-width: 768px) {
             .main-content {
-                padding: 80px 20px 90px;
+                padding: calc(80px + env(safe-area-inset-top, 0px)) 20px calc(90px + env(safe-area-inset-bottom, 0px));
             }
 
             .product-grid {
                 grid-template-columns: repeat(4, 1fr);
             }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .btn {
+                padding: 14px 24px;
+                font-size: 16px;
+            }
+
+            .qty-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+            }
+
+            .order-item-name {
+                font-size: 16px;
+            }
+
+            .action-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+        }
+
+        .search-input {
+            padding: 8px 14px;
+            border: 1px solid #E0E0E0;
+            border-radius: 20px;
+            font-size: 14px;
+            width: 180px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #4CAF50;
+        }
+
+        .sort-select {
+            padding: 6px 10px;
+            border: 1px solid #E0E0E0;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            color: #424242;
+            background: white;
         }
     </style>
 </head>
 <body>
     <header class="header">
         <h1>🥬 蔬菜小票系统</h1>
-        <input type="text" class="shop-name-input" id="shopName" placeholder="店铺名称" value="新鲜蔬菜店">
+        <input type="text" class="shop-name-input" id="shopName" placeholder="店铺名称" value="新鲜蔬菜店" oninput="shopInfo.name=this.value;saveShopInfo()">
     </header>
 
     <main class="main-content">
@@ -923,7 +1004,19 @@
 
         <div id="productsPage" class="page">
             <div class="card">
-                <div class="card-title">📦 商品列表</div>
+                <div class="card-title" style="justify-content: space-between;">
+                    <span>📦 商品列表</span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" class="search-input" id="productSearch" placeholder="🔍 搜索商品..." oninput="renderProducts()">
+                        <select class="sort-select" id="productSort" onchange="renderProducts()">
+                            <option value="default">默认排序</option>
+                            <option value="name-asc">名称 A→Z</option>
+                            <option value="name-desc">名称 Z→A</option>
+                            <option value="price-asc">价格 低→高</option>
+                            <option value="price-desc">价格 高→低</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="productList">
                     <div class="empty-state" id="emptyProducts">
                         <div class="empty-state-icon">📦</div>
@@ -978,8 +1071,8 @@
 
     <button class="fab" id="fabBtn" onclick="handleFabClick()">+</button>
 
-    <button class="fab" id="settingsBtn" style="bottom: 150px; background: #1976D2;" onclick="openShopSettings()">⚙️</button>
-    <button class="fab" id="helpBtn" style="bottom: 210px; background: #FF9800;" onclick="openHelpModal()">❓</button>
+    <button class="fab" id="settingsBtn" style="bottom: calc(150px + env(safe-area-inset-bottom, 0px)); background: #1976D2;" onclick="openShopSettings()">⚙️</button>
+    <button class="fab" id="helpBtn" style="bottom: calc(210px + env(safe-area-inset-bottom, 0px)); background: #FF9800;" onclick="openHelpModal()">❓</button>
 
     <nav class="nav">
         <button class="nav-item active" onclick="showPage('sales')">
@@ -1025,8 +1118,8 @@
             <div class="form-group">
                 <label class="form-label">计量单位</label>
                 <div class="unit-toggle">
-                    <button class="unit-btn active" data-unit="斤" onclick="selectUnit('斤')">斤</button>
-                    <button class="unit-btn" data-unit="公斤" onclick="selectUnit('公斤')">公斤</button>
+                    <button class="unit-btn product-unit-btn active" data-unit="斤" onclick="selectUnit('斤')">斤</button>
+                    <button class="unit-btn product-unit-btn" data-unit="公斤" onclick="selectUnit('公斤')">公斤</button>
                 </div>
             </div>
 
@@ -1039,6 +1132,10 @@
             <div class="modal-header">
                 <span class="modal-title">选择商品</span>
                 <button class="modal-close" onclick="closeSelectModal()">×</button>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <input type="text" class="search-input" id="selectProductSearch" placeholder="🔍 搜索商品..." oninput="filterSelectProducts()" style="width: 100%;">
             </div>
 
             <div class="product-grid" id="selectProductList">
@@ -1171,8 +1268,8 @@
             <div class="form-group">
                 <label class="form-label">计量单位</label>
                 <div class="unit-toggle">
-                    <button class="unit-btn active" data-unit="斤" onclick="selectEditUnit('斤')">斤</button>
-                    <button class="unit-btn" data-unit="公斤" onclick="selectEditUnit('公斤')">公斤</button>
+                    <button class="unit-btn edit-unit-btn active" data-unit="斤" onclick="selectEditUnit('斤')">斤</button>
+                    <button class="unit-btn edit-unit-btn" data-unit="公斤" onclick="selectEditUnit('公斤')">公斤</button>
                 </div>
             </div>
 
@@ -1433,7 +1530,7 @@
             document.getElementById('editItemQuantity').value = item.quantity;
             editItemUnit = item.unit;
 
-            document.querySelectorAll('.unit-btn').forEach(btn => {
+            document.querySelectorAll('.edit-unit-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.unit === editItemUnit);
             });
 
@@ -1446,7 +1543,7 @@
 
         function selectEditUnit(unit) {
             editItemUnit = unit;
-            document.querySelectorAll('.unit-btn').forEach(btn => {
+            document.querySelectorAll('.edit-unit-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.unit === unit);
             });
         }
@@ -1558,18 +1655,40 @@
         function renderProducts() {
             const productList = document.getElementById('productList');
             const emptyProducts = document.getElementById('emptyProducts');
+            const searchInput = document.getElementById('productSearch');
+            const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            const filteredProducts = keyword
+                ? products.filter(p => p.name.toLowerCase().includes(keyword))
+                : products;
 
             // 只移除 .product-list-item 元素，保留 emptyProducts
             productList.querySelectorAll('.product-list-item').forEach(el => el.remove());
 
-            if (products.length === 0) {
+            if (filteredProducts.length === 0) {
                 emptyProducts.style.display = 'block';
+                if (keyword && products.length > 0) {
+                    emptyProducts.querySelector('.empty-state-text').textContent = '未找到匹配的商品';
+                } else {
+                    emptyProducts.querySelector('.empty-state-text').textContent = '暂无商品，点击下方"+"添加';
+                }
                 return;
             }
 
             emptyProducts.style.display = 'none';
+
+            // 排序
+            let sortedProducts = [...filteredProducts];
+            const sortValue = document.getElementById('productSort')?.value || 'default';
+            switch(sortValue) {
+                case 'name-asc': sortedProducts.sort((a,b) => a.name.localeCompare(b.name, 'zh')); break;
+                case 'name-desc': sortedProducts.sort((a,b) => b.name.localeCompare(a.name, 'zh')); break;
+                case 'price-asc': sortedProducts.sort((a,b) => a.price - b.price); break;
+                case 'price-desc': sortedProducts.sort((a,b) => b.price - a.price); break;
+            }
+
             const fragment = document.createDocumentFragment();
-            products.forEach(p => {
+            sortedProducts.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'product-list-item';
                 div.onclick = () => addToOrder(p.id);
@@ -1659,7 +1778,7 @@
             document.getElementById('productPrice').value = product ? product.price : '';
             selectedUnit = product ? product.unit : '斤';
 
-            document.querySelectorAll('.unit-btn').forEach(btn => {
+            document.querySelectorAll('.product-unit-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.unit === selectedUnit);
             });
 
@@ -1699,7 +1818,7 @@
 
         function selectUnit(unit) {
             selectedUnit = unit;
-            document.querySelectorAll('.unit-btn').forEach(btn => {
+            document.querySelectorAll('.product-unit-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.unit === unit);
             });
         }
@@ -1761,7 +1880,7 @@
                 <span class="photo-upload-icon">📷</span>
                 <span class="photo-upload-text">点击上传照片</span>
             `;
-            document.querySelectorAll('.unit-btn').forEach(btn => {
+            document.querySelectorAll('.product-unit-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.unit === '斤');
             });
         }
@@ -1791,10 +1910,16 @@
         function openSelectProductModal() {
             const selectProductList = document.getElementById('selectProductList');
             const emptySelectProducts = document.getElementById('emptySelectProducts');
+            const selectProductSearch = document.getElementById('selectProductSearch');
 
             if (!selectProductList) {
                 console.error('selectProductList element not found');
                 return;
+            }
+
+            // 清空搜索框
+            if (selectProductSearch) {
+                selectProductSearch.value = '';
             }
 
             // 只移除 .product-item 元素，保留 emptySelectProducts
@@ -1803,6 +1928,7 @@
             if (products.length === 0) {
                 if (emptySelectProducts) {
                     emptySelectProducts.style.display = 'block';
+                    emptySelectProducts.querySelector('.empty-state-text').textContent = '暂无商品，请先添加';
                 }
             } else {
                 if (emptySelectProducts) {
@@ -1834,6 +1960,50 @@
             if (modal) {
                 modal.classList.add('active');
             }
+        }
+
+        function filterSelectProducts() {
+            const searchInput = document.getElementById('selectProductSearch');
+            const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            const selectProductList = document.getElementById('selectProductList');
+            const emptySelectProducts = document.getElementById('emptySelectProducts');
+
+            const filteredProducts = keyword
+                ? products.filter(p => p.name.toLowerCase().includes(keyword))
+                : products;
+
+            selectProductList.querySelectorAll('.product-item').forEach(el => el.remove());
+
+            if (filteredProducts.length === 0) {
+                if (emptySelectProducts) {
+                    emptySelectProducts.style.display = 'block';
+                    emptySelectProducts.querySelector('.empty-state-text').textContent = keyword ? '未找到匹配的商品' : '暂无商品，请先添加';
+                }
+                return;
+            }
+
+            if (emptySelectProducts) emptySelectProducts.style.display = 'none';
+
+            const fragment = document.createDocumentFragment();
+            filteredProducts.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'product-item';
+                div.style.position = 'relative';
+                div.onclick = (e) => {
+                    if (e.target.closest('.select-product-delete-btn')) return;
+                    addToOrder(p.id);
+                };
+                div.innerHTML = `
+                    <button class="select-product-delete-btn" onclick="event.stopPropagation(); deleteProductFromModal('${p.id}')" style="position:absolute;top:4px;right:4px;background:rgba(220,53,69,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;line-height:22px;text-align:center;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;">×</button>
+                    <div class="product-image">
+                        ${p.photo ? `<img src="${p.photo}" alt="${p.name}">` : '🥬'}
+                    </div>
+                    <div class="product-name">${p.name}</div>
+                    <div class="product-price">¥${p.price.toFixed(2)}/${p.unit}</div>
+                `;
+                fragment.appendChild(div);
+            });
+            selectProductList.appendChild(fragment);
         }
 
         function closeSelectModal() {
@@ -1933,8 +2103,8 @@
         }
 
         function decreaseQty(index) {
-            if (currentOrder[index].quantity > 0.5) {
-                currentOrder[index].quantity -= 0.5;
+            if (currentOrder[index].quantity > 0.1) {
+                currentOrder[index].quantity -= 0.1;
                 currentOrder[index].subtotal = currentOrder[index].quantity * currentOrder[index].price;
                 renderOrderItems();
             }
@@ -2074,6 +2244,8 @@
             loadStats();
 
             window.print();
+
+            showToast('打印成功，已计入营业额');
 
             currentOrder = [];
             document.getElementById('orderRemark').value = '';

@@ -1,19 +1,29 @@
 图标文件说明
 ============
 
-本目录需要放置以下PWA应用图标（PNG格式）：
+本目录需要放置以下 PWA 应用图标（PNG 格式）：
 
-- icon-72x72.png    - 安卓设备
-- icon-120x120.png  - iPhone
-- icon-144x144.png  - 微软设备
-- icon-152x152.png  - iPad
-- icon-180x180.png  - iPhone Retina
-- icon-512x512.png  - 启动画面
+| 文件名 | 尺寸 | 用途 |
+|--------|------|------|
+| icon-72x72.png | 72×72 | 安卓设备 |
+| icon-120x120.png | 120×120 | iPhone |
+| icon-144x144.png | 144×144 | 微软设备 |
+| icon-152x152.png | 152×152 | iPad |
+| icon-180x180.png | 180×180 | iPhone Retina |
+| icon-512x512.png | 512×512 | 启动画面 |
 
 图标设计建议：
 - 背景色：#2E7D32（绿色，代表新鲜蔬菜）
-- 可以包含简单的蔬菜图标或文字
+- 可以包含简单的蔬菜图标或文字（如"🥬"）
 - 保持简洁，适合小尺寸显示
+- 建议使用圆角设计（iOS 会自动裁剪）
 
 临时解决方案：
-如果没有图标文件，系统会使用默认的emoji（🥬）作为替代。
+如果没有图标文件，系统会使用默认的 emoji（🥬）作为替代，不影响功能使用。
+
+在线图标生成工具推荐：
+- https://www.pwabuilder.com/imageGenerator
+- https://appicon.co/
+- https://favicon.io/
+
+生成后请将 PNG 文件放入此目录即可。
