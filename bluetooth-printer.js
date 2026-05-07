@@ -330,128 +330,37 @@ class EscPosCommands {
     }
 
     /**
-     * 生成小票内容
-     * 使用简体中文，确保 GBK 编码兼容性
-     * 格式宽松，易于阅读
+     * 生成小票内容（入口方法）
+     * @param {string} template - 模板名称: 'standard'(标准), 'simple'(简洁), 'compact'(紧凑), 'detail'(详细)
      */
-    generateReceipt(shopInfo, orderItems, total, remark) {
+    generateReceipt(shopInfo, orderItems, total, remark, template) {
+        template = template || 'standard';
+        switch (template) {
+            case 'simple':  return this._templateSimple(shopInfo, orderItems, total, remark);
+            case 'compact': return this._templateCompact(shopInfo, orderItems, total, remark);
+            case 'detail':  return this._templateDetail(shopInfo, orderItems, total, remark);
+            default:        return this._templateStandard(shopInfo, orderItems, total, remark);
+        }
+    }
+
+    /**
+     * 辅助方法：格式化日期时间
+     */
+    _formatDateTime() {
         const now = new Date();
-        // 手动格式化日期时间，避免 locale 产生非 GBK 字符
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        const dateStr = `${year}-${month}-${day}`;
-        const timeStr = `${hours}:${minutes}:${seconds}`;
+        const y = now.getFullYear();
+        const M = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        return { dateStr: `${y}-${M}-${d}`, timeStr: `${h}:${m}:${s}` };
+    }
 
-        let commands = [];
-
-        // 初始化
-        commands.push(this.init());
-
-        // 空行 - 顶部留白
-        commands.push(this.newline());
-
-        // 店铺名称 - 居中放大
-        commands.push(this.align(1));
-        commands.push(this.setSize(2, 2));
-        commands.push(this.textToBytes(shopInfo.name || '生鲜小票'));
-        commands.push(this.newline());
-        commands.push(this.normalSize());
-        commands.push(this.newline());
-        commands.push(this.newline()); // 额外空行
-
-        // 地址和电话
-        commands.push(this.align(0));
-        if (shopInfo.address) {
-            commands.push(this.textToBytes('地址: ' + shopInfo.address));
-            commands.push(this.newline());
-        }
-        if (shopInfo.phone) {
-            commands.push(this.textToBytes('电话: ' + shopInfo.phone));
-            commands.push(this.newline());
-        }
-
-        // 空行
-        commands.push(this.newline());
-
-        // 日期时间
-        commands.push(this.textToBytes('日期: ' + dateStr));
-        commands.push(this.newline());
-        commands.push(this.textToBytes('时间: ' + timeStr));
-        commands.push(this.newline());
-
-        // 空行
-        commands.push(this.newline());
-
-        // 分隔线
-        commands.push(this.textToBytes('================'));
-        commands.push(this.newline());
-        commands.push(this.newline()); // 额外空行
-
-        // 商品列表标题
-        commands.push(this.bold(1));
-        commands.push(this.textToBytes('商品名称   数量    金额'));
-        commands.push(this.bold(0));
-        commands.push(this.newline());
-        commands.push(this.newline()); // 额外空行
-
-        // 商品列表 - 每行商品后加空行
-        orderItems.forEach(item => {
-            const name = item.name.substring(0, 6).padEnd(6, ' ');
-            const qty = (item.quantity + item.unit).substring(0, 6).padStart(6, ' ');
-            const price = ('¥' + item.subtotal.toFixed(2)).padStart(8, ' ');
-            commands.push(this.textToBytes(name + '  ' + qty + '  ' + price));
-            commands.push(this.newline());
-        });
-
-        // 空行
-        commands.push(this.newline());
-
-        // 分隔线
-        commands.push(this.textToBytes('================'));
-        commands.push(this.newline());
-        commands.push(this.newline()); // 额外空行
-
-        // 备注
-        if (remark) {
-            commands.push(this.textToBytes('备注: ' + remark));
-            commands.push(this.newline());
-            commands.push(this.newline()); // 额外空行
-        }
-
-        // 总计 - 更突出显示
-        commands.push(this.bold(1));
-        commands.push(this.setSize(2, 2));
-        commands.push(this.align(1)); // 居中
-        commands.push(this.textToBytes('合计: ¥' + total.toFixed(2)));
-        commands.push(this.newline());
-        commands.push(this.normalSize());
-        commands.push(this.bold(0));
-        commands.push(this.newline());
-        commands.push(this.newline()); // 额外空行
-
-        // 分隔线
-        commands.push(this.align(0));
-        commands.push(this.textToBytes('================'));
-        commands.push(this.newline());
-        commands.push(this.newline()); // 额外空行
-
-        // 页脚
-        commands.push(this.align(1));
-        commands.push(this.textToBytes('谢谢惠顾'));
-        commands.push(this.newline());
-        commands.push(this.textToBytes('欢迎下次光临'));
-        commands.push(this.newline());
-        commands.push(this.newline()); // 额外空行
-
-        // 走纸并切纸
-        commands.push(this.feed(4));
-        commands.push(this.cut());
-
-        // 合并所有命令
+    /**
+     * 辅助方法：合并命令数组为 Uint8Array
+     */
+    _mergeCommands(commands) {
         let totalLength = commands.reduce((sum, arr) => sum + arr.length, 0);
         let result = new Uint8Array(totalLength);
         let offset = 0;
@@ -459,8 +368,312 @@ class EscPosCommands {
             result.set(arr, offset);
             offset += arr.length;
         });
-        
         return result;
+    }
+
+    /**
+     * 标准版模板（当前格式，宽松美观）
+     */
+    _templateStandard(shopInfo, orderItems, total, remark) {
+        const { dateStr, timeStr } = this._formatDateTime();
+        let c = [];
+
+        c.push(this.init());
+        c.push(this.newline());
+
+        // 店铺名称 - 居中放大
+        c.push(this.align(1));
+        c.push(this.setSize(2, 2));
+        c.push(this.textToBytes(shopInfo.name || '生鲜小票'));
+        c.push(this.newline());
+        c.push(this.normalSize());
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 地址和电话 - 居中
+        c.push(this.align(1));
+        if (shopInfo.address) { c.push(this.textToBytes(shopInfo.address)); c.push(this.newline()); }
+        if (shopInfo.phone) { c.push(this.textToBytes(shopInfo.phone)); c.push(this.newline()); }
+        c.push(this.align(0));
+        c.push(this.newline());
+
+        // 日期时间 - 居中
+        c.push(this.align(1));
+        c.push(this.textToBytes(dateStr + ' ' + timeStr));
+        c.push(this.newline());
+        c.push(this.align(0));
+        c.push(this.newline());
+
+        // 分隔线
+        c.push(this.textToBytes('================'));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 商品列表标题
+        c.push(this.bold(1));
+        c.push(this.textToBytes('商品名称   数量    金额'));
+        c.push(this.bold(0));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 商品列表
+        orderItems.forEach((item, index) => {
+            const name = item.name.substring(0, 6).padEnd(6, ' ');
+            const qty = (item.quantity + item.unit).substring(0, 6).padStart(6, ' ');
+            const price = ('¥' + item.subtotal.toFixed(2)).padStart(8, ' ');
+            c.push(this.textToBytes(name + '  ' + qty + '  ' + price));
+            c.push(this.newline());
+            if (orderItems.length > 1 && index < orderItems.length - 1) c.push(this.newline());
+        });
+
+        c.push(this.newline());
+        c.push(this.textToBytes('================'));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 备注
+        if (remark) { c.push(this.textToBytes('备注: ' + remark)); c.push(this.newline()); c.push(this.newline()); }
+
+        // 总计
+        c.push(this.bold(1));
+        c.push(this.setSize(2, 2));
+        c.push(this.align(1));
+        c.push(this.textToBytes('合计: ¥' + total.toFixed(2)));
+        c.push(this.newline());
+        c.push(this.normalSize());
+        c.push(this.bold(0));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        c.push(this.align(0));
+        c.push(this.textToBytes('================'));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 页脚
+        c.push(this.align(1));
+        c.push(this.textToBytes('谢谢惠顾'));
+        c.push(this.newline());
+        c.push(this.textToBytes('欢迎下次光临'));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        c.push(this.feed(4));
+        c.push(this.cut());
+        return this._mergeCommands(c);
+    }
+
+    /**
+     * 简洁版模板（最少内容，快速打印）
+     */
+    _templateSimple(shopInfo, orderItems, total, remark) {
+        const { dateStr, timeStr } = this._formatDateTime();
+        let c = [];
+
+        c.push(this.init());
+
+        // 店铺名称
+        c.push(this.align(1));
+        c.push(this.setSize(2, 2));
+        c.push(this.textToBytes(shopInfo.name || '生鲜小票'));
+        c.push(this.newline());
+        c.push(this.normalSize());
+        c.push(this.newline());
+
+        // 日期
+        c.push(this.textToBytes(dateStr + ' ' + timeStr));
+        c.push(this.newline());
+        c.push(this.textToBytes('----------------'));
+        c.push(this.newline());
+
+        // 商品列表
+        orderItems.forEach(item => {
+            const name = item.name.substring(0, 8).padEnd(8, ' ');
+            const qty = (item.quantity + item.unit).substring(0, 5).padStart(5, ' ');
+            const price = '¥' + item.subtotal.toFixed(2);
+            c.push(this.textToBytes(name + qty + price));
+            c.push(this.newline());
+        });
+
+        c.push(this.textToBytes('----------------'));
+        c.push(this.newline());
+
+        // 总计
+        c.push(this.bold(1));
+        c.push(this.setSize(2, 1));
+        c.push(this.textToBytes('合计: ¥' + total.toFixed(2)));
+        c.push(this.newline());
+        c.push(this.normalSize());
+        c.push(this.bold(0));
+        c.push(this.newline());
+
+        c.push(this.align(1));
+        c.push(this.textToBytes('谢谢惠顾'));
+        c.push(this.newline());
+
+        c.push(this.feed(3));
+        c.push(this.cut());
+        return this._mergeCommands(c);
+    }
+
+    /**
+     * 紧凑版模板（节省纸张，无多余空行）
+     */
+    _templateCompact(shopInfo, orderItems, total, remark) {
+        const { dateStr, timeStr } = this._formatDateTime();
+        let c = [];
+
+        c.push(this.init());
+
+        // 店铺名称
+        c.push(this.align(1));
+        c.push(this.setSize(1, 1));
+        c.push(this.bold(1));
+        c.push(this.textToBytes(shopInfo.name || '生鲜小票'));
+        c.push(this.newline());
+        c.push(this.bold(0));
+        if (shopInfo.phone) { c.push(this.textToBytes(shopInfo.phone)); c.push(this.newline()); }
+        c.push(this.textToBytes(dateStr + ' ' + timeStr));
+        c.push(this.newline());
+        c.push(this.align(0));
+
+        c.push(this.textToBytes('----------------'));
+        c.push(this.newline());
+
+        // 商品列表（紧凑排列）
+        c.push(this.bold(1));
+        c.push(this.textToBytes('商品       数量   金额'));
+        c.push(this.bold(0));
+        c.push(this.newline());
+
+        orderItems.forEach(item => {
+            const name = item.name.substring(0, 6).padEnd(6, ' ');
+            const qty = (item.quantity + item.unit).substring(0, 5).padStart(5, ' ');
+            const price = ('¥' + item.subtotal.toFixed(2)).padStart(7, ' ');
+            c.push(this.textToBytes(name + qty + price));
+            c.push(this.newline());
+        });
+
+        c.push(this.textToBytes('----------------'));
+        c.push(this.newline());
+
+        if (remark) { c.push(this.textToBytes('备注:' + remark)); c.push(this.newline()); }
+
+        c.push(this.bold(1));
+        c.push(this.textToBytes('合计:¥' + total.toFixed(2)));
+        c.push(this.bold(0));
+        c.push(this.newline());
+        c.push(this.textToBytes('----------------'));
+        c.push(this.newline());
+
+        c.push(this.align(1));
+        c.push(this.textToBytes('谢谢惠顾 欢迎下次光临'));
+        c.push(this.newline());
+
+        c.push(this.feed(2));
+        c.push(this.cut());
+        return this._mergeCommands(c);
+    }
+
+    /**
+     * 详细版模板（含单价、备注、客户信息等）
+     */
+    _templateDetail(shopInfo, orderItems, total, remark) {
+        const { dateStr, timeStr } = this._formatDateTime();
+        let c = [];
+
+        c.push(this.init());
+        c.push(this.newline());
+
+        // 店铺名称 - 大号居中
+        c.push(this.align(1));
+        c.push(this.setSize(2, 2));
+        c.push(this.textToBytes(shopInfo.name || '生鲜小票'));
+        c.push(this.newline());
+        c.push(this.normalSize());
+        c.push(this.newline());
+
+        // 地址电话
+        c.push(this.align(1));
+        if (shopInfo.address) { c.push(this.textToBytes(shopInfo.address)); c.push(this.newline()); }
+        if (shopInfo.phone) { c.push(this.textToBytes('电话:' + shopInfo.phone)); c.push(this.newline()); }
+        c.push(this.newline());
+
+        // 日期时间
+        c.push(this.textToBytes(dateStr + ' ' + timeStr));
+        c.push(this.newline());
+        c.push(this.align(0));
+        c.push(this.newline());
+
+        c.push(this.textToBytes('================'));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 商品列表标题（含单价列）
+        c.push(this.bold(1));
+        c.push(this.textToBytes('商品    单价  数量   金额'));
+        c.push(this.bold(0));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 商品列表（详细版：显示单价）
+        orderItems.forEach((item, index) => {
+            const name = item.name.substring(0, 4).padEnd(4, ' ');
+            const unitPrice = ('¥' + item.price.toFixed(1)).substring(0, 5).padStart(5, ' ');
+            const qty = (item.quantity + item.unit).substring(0, 5).padStart(5, ' ');
+            const subtotal = ('¥' + item.subtotal.toFixed(2)).padStart(7, ' ');
+            c.push(this.textToBytes(name + ' ' + unitPrice + ' ' + qty + ' ' + subtotal));
+            c.push(this.newline());
+            if (orderItems.length > 1 && index < orderItems.length - 1) c.push(this.newline());
+        });
+
+        c.push(this.newline());
+        c.push(this.textToBytes('================'));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 备注
+        if (remark) {
+            c.push(this.textToBytes('备注: ' + remark));
+            c.push(this.newline());
+            c.push(this.newline());
+        }
+
+        // 商品总数
+        const totalQty = orderItems.reduce((sum, item) => sum + item.quantity, 0);
+        c.push(this.textToBytes('商品种类: ' + orderItems.length + ' 种'));
+        c.push(this.newline());
+        c.push(this.textToBytes('商品总数: ' + totalQty));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 总计
+        c.push(this.bold(1));
+        c.push(this.setSize(2, 2));
+        c.push(this.align(1));
+        c.push(this.textToBytes('合计: ¥' + total.toFixed(2)));
+        c.push(this.newline());
+        c.push(this.normalSize());
+        c.push(this.bold(0));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        c.push(this.align(0));
+        c.push(this.textToBytes('================'));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        // 页脚
+        c.push(this.align(1));
+        c.push(this.textToBytes('谢谢惠顾'));
+        c.push(this.newline());
+        c.push(this.textToBytes('欢迎下次光临'));
+        c.push(this.newline());
+        c.push(this.newline());
+
+        c.push(this.feed(4));
+        c.push(this.cut());
+        return this._mergeCommands(c);
     }
 }
 
@@ -486,6 +699,10 @@ class GBKEncoder {
         for (let i = 0x00; i <= 0x7F; i++) {
             this.charToBytes.set(i, [i]);
         }
+
+        // 手动添加 GBK 扩展区单字节字符（0x80-0xFF 中打印机常用的）
+        this.charToBytes.set(0xA5, [0xA3, 0xA4]); // ¥ 人民币符号
+        this.charToBytes.set(0xA1, [0xA1, 0xA1]); // （全角空格等）
 
         try {
             const decoder = new TextDecoder('gbk');

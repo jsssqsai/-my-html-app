@@ -1118,6 +1118,27 @@
             background: #2E7D32;
             color: white;
         }
+        /* 打印模板选择按钮 */
+        .template-btn {
+            padding: 8px 4px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            color: #666;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .template-btn.active {
+            border-color: #35bb3b;
+            background: #e8f5e9;
+            color: #2E7D32;
+            font-weight: 600;
+        }
+        .template-btn:active {
+            transform: scale(0.95);
+        }
         .bluetooth-btn.disconnect {
             background: #f44336;
             color: white;
@@ -1486,6 +1507,17 @@
                 <span id="bluetoothStatusText" style="flex: 1;">蓝牙打印机未连接</span>
                 <button class="bluetooth-btn connect" onclick="showBluetoothHelp()" style="margin-right: 8px; background: #2196F3;">❓</button>
                 <button id="bluetoothBtn" class="bluetooth-btn connect" onclick="toggleBluetoothConnection()">连接</button>
+            </div>
+
+            <!-- 打印模板选择 -->
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 13px; color: #666; display: block; margin-bottom: 6px;">打印模板</label>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                    <button class="template-btn active" data-template="standard" onclick="selectTemplate('standard', this)">标准</button>
+                    <button class="template-btn" data-template="simple" onclick="selectTemplate('simple', this)">简洁</button>
+                    <button class="template-btn" data-template="compact" onclick="selectTemplate('compact', this)">紧凑</button>
+                    <button class="template-btn" data-template="detail" onclick="selectTemplate('detail', this)">详细</button>
+                </div>
             </div>
 
             <div id="previewContentWrapper" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
@@ -2611,6 +2643,22 @@
             document.getElementById('printPreviewModal').classList.add('active');
         }
 
+        // 当前选择的打印模板
+        let currentPrintTemplate = 'standard';
+
+        /**
+         * 选择打印模板
+         */
+        function selectTemplate(template, btn) {
+            currentPrintTemplate = template;
+            // 更新按钮样式
+            document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            // 刷新预览
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = generateReceiptHTML(true);
+        }
+
         function closePrintPreview() {
             document.getElementById('printPreviewModal').classList.remove('active');
         }
@@ -2768,9 +2816,9 @@
                 const remark = document.getElementById('orderRemark').value.trim();
                 const totalAmount = currentOrder.reduce((sum, item) => sum + item.subtotal, 0);
 
-                // 使用 ESC/POS 指令生成打印数据
+                // 使用 ESC/POS 指令生成打印数据（传入当前选择的模板）
                 const escPos = new EscPosCommands();
-                const printData = escPos.generateReceipt(shopInfo, currentOrder, totalAmount, remark);
+                const printData = escPos.generateReceipt(shopInfo, currentOrder, totalAmount, remark, currentPrintTemplate);
 
                 // 发送打印数据
                 await bluetoothPrinter.printRaw(printData.buffer);
