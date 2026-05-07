@@ -792,96 +792,35 @@
             font-size: 16px;
         }
 
+        /* 添加商品按钮 - 固定在右下角 */
         .fab {
             position: fixed;
-            bottom: calc(110px + env(safe-area-inset-bottom, 0px));
-            right: 20px;
-            width: 60px;
-            height: 60px;
+            bottom: calc(90px + env(safe-area-inset-bottom, 20px));
+            right: 15px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background: #35bb3b;
             color: white;
             border: none;
-            font-size: 32px;
-            box-shadow: 0 4px 16px rgba(46,125,50,0.5);
+            font-size: 24px;
+            font-weight: 300;
+            box-shadow: 0 3px 12px rgba(46,125,50,0.4);
             cursor: pointer;
-            z-index: 1000;
+            z-index: 50;
             touch-action: manipulation;
             -webkit-transform: translateZ(0);
             transform: translateZ(0);
             will-change: transform;
             outline: none;
             -webkit-tap-highlight-color: transparent;
+            display: none; /* 默认隐藏，由JS控制显示 */
+            align-items: center;
+            justify-content: center;
         }
 
         .fab:active {
             transform: scale(0.95);
-        }
-
-        /* 折叠式 FAB 按钮组 */
-        .fab-group {
-            position: fixed;
-            bottom: calc(110px + env(safe-area-inset-bottom, 0px));
-            right: 20px;
-            display: flex;
-            flex-direction: column-reverse;
-            align-items: center;
-            gap: 12px;
-            z-index: 1000;
-        }
-        .fab-main {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: #35bb3b;
-            color: white;
-            border: none;
-            font-size: 28px;
-            box-shadow: 0 4px 16px rgba(46,125,50,0.5);
-            cursor: pointer;
-            touch-action: manipulation;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .fab-main:active {
-            transform: scale(0.95);
-        }
-        .fab-main.active {
-            transform: rotate(45deg);
-            background: #d32f2f;
-        }
-        .fab-secondary {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            border: none;
-            font-size: 20px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
-            cursor: pointer;
-            touch-action: manipulation;
-            transition: transform 0.2s, opacity 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transform: scale(0.5);
-            pointer-events: none;
-        }
-        .fab-secondary span {
-            color: white;
-        }
-        #settingsBtn.fab-secondary {
-            background: #1976D2;
-        }
-        #helpBtn.fab-secondary {
-            background: #FF9800;
-        }
-        .fab-group.open .fab-secondary {
-            opacity: 1;
-            transform: scale(1);
-            pointer-events: auto;
         }
         .fab-group.open .fab-secondary:nth-last-child(2) {
             transition-delay: 0.05s;
@@ -1249,8 +1188,8 @@
 </head>
 <body>
     <header class="header">
-        <h1>🥬 蔬菜小票系统</h1>
-        <input type="text" class="shop-name-input" id="shopName" placeholder="店铺名称" value="新鲜蔬菜店" oninput="shopInfo.name=this.value;saveShopInfo()">
+        <h1>🥩 生鲜小票系统</h1>
+        <input type="text" class="shop-name-input" id="shopName" placeholder="店铺名称" value="新鲜生鲜店" oninput="shopInfo.name=this.value;saveShopInfo()">
     </header>
 
     <main class="main-content">
@@ -1292,9 +1231,23 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <!-- 蓝牙连接状态显示 -->
+                <div id="salesBluetoothStatus" class="bluetooth-status disconnected" style="margin-bottom: 10px;">
+                    <span class="bluetooth-dot"></span>
+                    <span id="salesBluetoothText" style="flex: 1; font-size: 13px;">蓝牙打印机未连接</span>
+                    <button class="bluetooth-btn connect" onclick="showBluetoothHelp()" style="margin-right: 8px; background: #2196F3; padding: 4px 8px; font-size: 11px;">❓</button>
+                    <button class="bluetooth-btn connect" onclick="toggleBluetoothConnection()" style="padding: 4px 12px; font-size: 11px;">连接</button>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button class="btn btn-secondary" style="flex: 1;" onclick="clearOrder()">🗑️ 清空</button>
                     <button class="btn btn-primary btn-large" style="flex: 2;" onclick="openPrintPreview()">🖨️ 预览打印</button>
+                </div>
+
+                <!-- 销售页面操作按钮 -->
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="openSelectProductModal()">➕ 选择商品</button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="openShopSettings()">⚙️ 店铺设置</button>
                 </div>
             </div>
         </div>
@@ -1366,18 +1319,10 @@
         </div>
     </main>
 
-    <!-- 折叠式 FAB 按钮组 -->
-    <div class="fab-group" id="fabGroup">
-        <button class="fab fab-secondary" id="helpBtn" onclick="openHelpModal()" title="帮助">
-            <span>?</span>
-        </button>
-        <button class="fab fab-secondary" id="settingsBtn" onclick="openShopSettings()" title="设置">
-            <span>⚙</span>
-        </button>
-        <button class="fab fab-main" id="fabBtn" onclick="toggleFabMenu()">
-            <span class="fab-icon">+</span>
-        </button>
-    </div>
+    <!-- 添加商品按钮 - 只在商品页面显示 -->
+    <button class="fab" id="addProductFab" onclick="openProductModal()" title="添加商品">
+        <span>+</span>
+    </button>
 
     <nav class="nav">
         <button class="nav-item active" onclick="showPage('sales')">
@@ -1483,7 +1428,10 @@
 
             <div class="form-group">
                 <label class="form-label">计量单位</label>
-                <input type="text" class="form-input" id="quickAddUnit" placeholder="单位" readonly>
+                <select class="form-input" id="quickAddUnit" style="height: 44px;" onchange="updateOriginalPriceDisplay()">
+                    <option value="斤">斤</option>
+                    <option value="公斤">公斤</option>
+                </select>
             </div>
 
             <button class="btn btn-primary btn-full" onclick="confirmQuickAdd()">添加到销售单</button>
@@ -1540,18 +1488,6 @@
                 <button id="bluetoothBtn" class="bluetooth-btn connect" onclick="toggleBluetoothConnection()">连接</button>
             </div>
 
-            <!-- 打印方式选择 -->
-            <div class="print-mode-select" id="printModeSelect">
-                <div class="print-mode-option selected" data-mode="browser" onclick="selectPrintMode('browser')">
-                    <div class="mode-icon">🖨️</div>
-                    <div class="mode-text">浏览器打印</div>
-                </div>
-                <div class="print-mode-option" data-mode="bluetooth" onclick="selectPrintMode('bluetooth')">
-                    <div class="mode-icon">📡</div>
-                    <div class="mode-text">蓝牙打印</div>
-                </div>
-            </div>
-
             <div id="previewContentWrapper" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                 <div id="previewContent">
                     <div class="empty-state">
@@ -1559,11 +1495,6 @@
                         <div class="empty-state-text">请先添加商品到销售单</div>
                     </div>
                 </div>
-            </div>
-
-            <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
-                <button class="btn btn-secondary" style="flex: 1; min-width: 80px;" onclick="savePreviewAsImage()">📷 保存图片</button>
-                <button class="btn btn-secondary" style="flex: 1; min-width: 80px;" onclick="exportReceiptAsText()">📝 导出文本</button>
             </div>
 
             <div style="display: flex; gap: 10px;">
@@ -1702,9 +1633,16 @@
                         <li>点击"连接"按钮，在弹出的设备列表中选择打印机</li>
                         <li>等待连接成功后，点击"确认打印"</li>
                     </ol>
+                    <p><strong>iPad 用户特别注意：</strong></p>
+                    <ul style="margin-left: 20px; margin-bottom: 10px;">
+                        <li style="color: #d32f2f;">⚠️ iPad 上的 Chrome 和 Safari 不支持蓝牙打印！</li>
+                        <li>请使用 Bluefy 浏览器（App Store 免费下载）</li>
+                        <li>Bluefy 是专门为 iOS 设计的支持 Web Bluetooth 的浏览器</li>
+                    </ul>
                     <p><strong>注意事项：</strong></p>
                     <ul style="margin-left: 20px;">
-                        <li>请使用 Chrome 或 Edge 浏览器</li>
+                        <li>电脑用户：请使用 Chrome 或 Edge 浏览器</li>
+                        <li>iPad 用户：请使用 Bluefy 浏览器</li>
                         <li>需要通过 HTTPS 或 localhost 访问</li>
                         <li>支持的打印机：芯烨 XPrinter 系列</li>
                         <li>如果连接失败，请重启打印机后重试</li>
@@ -1722,7 +1660,7 @@
         let selectedUnit = '斤';
         let editingProductId = null;
         let shopInfo = {
-            name: '新鲜蔬菜店',
+            name: '新鲜生鲜店',
             address: '',
             phone: '',
             qrcode: ''
@@ -1734,6 +1672,44 @@
         let currentPrintMode = 'browser'; // 'browser' 或 'bluetooth'
         let isBluetoothConnected = false;
 
+        /**
+         * 检测浏览器是否支持蓝牙
+         */
+        function checkBluetoothSupport() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+            const isChrome = /Chrome/.test(navigator.userAgent);
+            const isBluefy = /Bluefy/.test(navigator.userAgent);
+
+            if (isBluefy) {
+                return { supported: true, message: '' };
+            }
+
+            if (isIOS) {
+                if (isChrome) {
+                    return {
+                        supported: false,
+                        message: 'iPad 上的 Chrome 不支持蓝牙功能。\n\n请使用 Bluefy 浏览器：\n1. 前往 App Store 搜索 "Bluefy"\n2. 下载并安装 Bluefy 浏览器\n3. 使用 Bluefy 打开本网页'
+                    };
+                }
+                if (isSafari) {
+                    return {
+                        supported: false,
+                        message: 'Safari 不支持蓝牙功能。\n\n请使用 Bluefy 浏览器：\n1. 前往 App Store 搜索 "Bluefy"\n2. 下载并安装 Bluefy 浏览器\n3. 使用 Bluefy 打开本网页'
+                    };
+                }
+            }
+
+            if (!('bluetooth' in navigator)) {
+                return {
+                    supported: false,
+                    message: '您的浏览器不支持蓝牙功能。\n\n请使用以下浏览器：\n• Chrome（桌面版）\n• Edge（桌面版）\n• Bluefy（iOS版）'
+                };
+            }
+
+            return { supported: true, message: '' };
+        }
+
         function init() {
             loadData();
             setTodayDate();
@@ -1742,6 +1718,10 @@
             renderOrderItems();
             renderOrderHistory();
             loadStats();
+
+            // 初始化添加商品按钮显示状态（默认在销售页面，所以隐藏）
+            const addProductFab = document.getElementById('addProductFab');
+            if (addProductFab) addProductFab.style.display = 'none';
         }
 
         function loadData() {
@@ -1830,7 +1810,9 @@
          * 显示蓝牙连接帮助
          */
         function showBluetoothHelp() {
-            const helpText = `🔷 蓝牙打印连接指南
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+            let helpText = `🔷 蓝牙打印连接指南
 
 【连接步骤】
 1. 确保打印机已开启
@@ -1858,17 +1840,35 @@
 ❓ 连接失败？
    → 检查 iPad 是否已配对其他设备
    → 重启打印机和 iPad 蓝牙
-   → 确保使用 Chrome 或 Edge 浏览器
+   → 确保使用正确的浏览器
 
 ❓ 打印乱码？
-   → 确保选择的是 ESC/POS 兼容的芯烨打印机
+   → 确保选择的是 ESC/POS 兼容的芯烨打印机`;
+
+            if (isIOS) {
+                helpText += `
+
+【iPad 用户特别注意】
+⚠️ iPad 上的 Chrome 和 Safari 不支持蓝牙打印！
+
+✅ 解决方案：使用 Bluefy 浏览器
+   1. 前往 App Store
+   2. 搜索 "Bluefy"（免费下载）
+   3. 安装后用 Bluefy 打开本网页
+   4. 即可正常使用蓝牙打印功能
+
+📱 Bluefy 是专门为 iOS 设计的支持 Web Bluetooth 的浏览器`;
+            } else {
+                helpText += `
 
 【支持的环境】
-✓ Chrome 浏览器（推荐）
-✓ Edge 浏览器
+✓ Chrome 浏览器（桌面版）
+✓ Edge 浏览器（桌面版）
+✓ Bluefy 浏览器（iOS版）
 ✓ HTTPS 或 localhost 环境
 ✗ Safari（暂不支持 Web Bluetooth）
 ✗ 微信内置浏览器`;
+            }
 
             alert(helpText);
         }
@@ -2008,7 +2008,7 @@
         }
 
         function saveShopSettings() {
-            shopInfo.name = document.getElementById('shopNameInput').value.trim() || '新鲜蔬菜店';
+            shopInfo.name = document.getElementById('shopNameInput').value.trim() || '新鲜生鲜店';
             shopInfo.address = document.getElementById('shopAddress').value.trim();
             shopInfo.phone = document.getElementById('shopPhone').value.trim();
             
@@ -2027,68 +2027,27 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
-            const fabGroup = document.getElementById('fabGroup');
+            const addProductFab = document.getElementById('addProductFab');
             
             if (page === 'sales') {
                 document.getElementById('salesPage').classList.add('active');
                 document.querySelector('.nav-item:nth-child(1)').classList.add('active');
-                if (fabGroup) fabGroup.style.display = 'flex';
+                // 销售页面隐藏添加商品按钮
+                if (addProductFab) addProductFab.style.display = 'none';
             } else if (page === 'products') {
                 document.getElementById('productsPage').classList.add('active');
                 document.querySelector('.nav-item:nth-child(2)').classList.add('active');
-                if (fabGroup) fabGroup.style.display = 'flex';
+                // 商品页面显示添加商品按钮
+                if (addProductFab) addProductFab.style.display = 'flex';
             } else if (page === 'stats') {
                 document.getElementById('statsPage').classList.add('active');
                 document.querySelector('.nav-item:nth-child(3)').classList.add('active');
-                if (fabGroup) fabGroup.style.display = 'none';
-            }
-            
-            // 切换页面时关闭 FAB 菜单
-            closeFabMenu();
-        }
-
-        let fabMenuOpen = false;
-
-        function toggleFabMenu() {
-            const fabGroup = document.getElementById('fabGroup');
-            const fabBtn = document.getElementById('fabBtn');
-            fabMenuOpen = !fabMenuOpen;
-            
-            if (fabMenuOpen) {
-                fabGroup.classList.add('open');
-                fabBtn.classList.add('active');
-            } else {
-                fabGroup.classList.remove('open');
-                fabBtn.classList.remove('active');
+                // 统计页面隐藏添加商品按钮
+                if (addProductFab) addProductFab.style.display = 'none';
             }
         }
 
-        function closeFabMenu() {
-            const fabGroup = document.getElementById('fabGroup');
-            const fabBtn = document.getElementById('fabBtn');
-            fabMenuOpen = false;
-            fabGroup.classList.remove('open');
-            fabBtn.classList.remove('active');
-        }
 
-        function handleFabClick() {
-            // 如果菜单已展开，先收起菜单
-            if (fabMenuOpen) {
-                closeFabMenu();
-                return;
-            }
-            
-            const activePage = document.querySelector('.page.active');
-            if (!activePage) return;
-            
-            const pageId = activePage.id;
-            if (pageId === 'salesPage') {
-                openProductModal();
-            } else if (pageId === 'productsPage') {
-                closeModal();
-                openProductModal();
-            }
-        }
 
         function renderProducts() {
             const productList = document.getElementById('productList');
@@ -2539,6 +2498,21 @@
             document.getElementById('quickAddUnit').value = '';
         }
 
+        /**
+         * 当计量单位改变时，同步更新原价显示
+         */
+        function updateOriginalPriceDisplay() {
+            const productId = document.getElementById('quickAddProductId').value;
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const selectedUnit = document.getElementById('quickAddUnit').value;
+            const originalPriceInput = document.getElementById('quickAddOriginalPrice');
+
+            // 更新原价显示，使用选择的单位
+            originalPriceInput.value = `¥${product.price.toFixed(2)}/${selectedUnit}`;
+        }
+
         function confirmQuickAdd() {
             const productId = document.getElementById('quickAddProductId').value;
             const product = products.find(p => p.id === productId);
@@ -2551,6 +2525,7 @@
             const customPrice = customPriceInput.trim() === '' ? NaN : parseFloat(customPriceInput);
             const quantityInput = document.getElementById('quickAddQuantity').value;
             const quantity = parseFloat(quantityInput);
+            const selectedUnit = document.getElementById('quickAddUnit').value;
             const price = isNaN(customPrice) || customPrice <= 0 ? product.price : customPrice;
 
             if (isNaN(quantity) || quantity <= 0) {
@@ -2569,7 +2544,7 @@
                     name: product.name,
                     photo: product.photo,
                     price: price,
-                    unit: product.unit,
+                    unit: selectedUnit,
                     quantity: quantity,
                     subtotal: price * quantity,
                     originalPrice: !isNaN(customPrice) && customPrice > 0 ? product.price : null
@@ -2627,8 +2602,8 @@
             const previewContent = document.getElementById('previewContent');
             previewContent.innerHTML = generateReceiptHTML(true);
 
-            // 初始化打印模式选择
-            selectPrintMode('browser');
+            // 默认使用蓝牙打印模式
+            currentPrintMode = 'bluetooth';
 
             // 更新蓝牙状态显示
             updateBluetoothUI();
@@ -2641,16 +2616,12 @@
         }
 
         function confirmPrint() {
-            if (currentPrintMode === 'bluetooth') {
-                if (!isBluetoothConnected) {
-                    showToast('请先连接蓝牙打印机');
-                    return;
-                }
-                bluetoothPrintReceipt();
-            } else {
-                closePrintPreview();
-                printReceipt();
+            // 只支持蓝牙打印
+            if (!isBluetoothConnected) {
+                showToast('请先连接蓝牙打印机');
+                return;
             }
+            bluetoothPrintReceipt();
         }
 
         // ==================== 蓝牙打印机功能 ====================
@@ -2686,9 +2657,10 @@
                 updateBluetoothUI();
                 showToast('蓝牙打印机已断开');
             } else {
-                // 连接打印机
-                if (!BluetoothPrinter.isSupported()) {
-                    showToast('您的浏览器不支持蓝牙功能');
+                // 检查浏览器支持情况
+                const supportCheck = checkBluetoothSupport();
+                if (!supportCheck.supported) {
+                    alert(supportCheck.message);
                     return;
                 }
 
@@ -2735,20 +2707,44 @@
          * 更新蓝牙连接状态UI
          */
         function updateBluetoothUI() {
+            // 更新打印预览弹窗中的蓝牙状态
             const statusEl = document.getElementById('bluetoothStatus');
             const statusText = document.getElementById('bluetoothStatusText');
             const btn = document.getElementById('bluetoothBtn');
 
-            if (isBluetoothConnected) {
-                statusEl.className = 'bluetooth-status connected';
-                statusText.textContent = bluetoothPrinter ? bluetoothPrinter.printerName : '蓝牙打印机已连接';
-                btn.textContent = '断开';
-                btn.className = 'bluetooth-btn disconnect';
-            } else {
-                statusEl.className = 'bluetooth-status disconnected';
-                statusText.textContent = '蓝牙打印机未连接';
-                btn.textContent = '连接';
-                btn.className = 'bluetooth-btn connect';
+            if (statusEl && statusText && btn) {
+                if (isBluetoothConnected) {
+                    statusEl.className = 'bluetooth-status connected';
+                    statusText.textContent = bluetoothPrinter ? bluetoothPrinter.printerName : '蓝牙打印机已连接';
+                    btn.textContent = '断开';
+                    btn.className = 'bluetooth-btn disconnect';
+                } else {
+                    statusEl.className = 'bluetooth-status disconnected';
+                    statusText.textContent = '蓝牙打印机未连接';
+                    btn.textContent = '连接';
+                    btn.className = 'bluetooth-btn connect';
+                }
+            }
+
+            // 更新销售页面的蓝牙状态
+            const salesStatusEl = document.getElementById('salesBluetoothStatus');
+            const salesStatusText = document.getElementById('salesBluetoothText');
+            const salesBtn = salesStatusEl ? salesStatusEl.querySelector('button:last-child') : null;
+
+            if (salesStatusEl && salesStatusText && salesBtn) {
+                if (isBluetoothConnected) {
+                    salesStatusEl.className = 'bluetooth-status connected';
+                    salesStatusEl.style.display = 'flex';
+                    salesStatusText.textContent = bluetoothPrinter ? bluetoothPrinter.printerName : '蓝牙打印机已连接';
+                    salesBtn.textContent = '断开';
+                    salesBtn.className = 'bluetooth-btn disconnect';
+                } else {
+                    salesStatusEl.className = 'bluetooth-status disconnected';
+                    salesStatusEl.style.display = 'flex';
+                    salesStatusText.textContent = '蓝牙打印机未连接';
+                    salesBtn.textContent = '连接';
+                    salesBtn.className = 'bluetooth-btn connect';
+                }
             }
         }
 
