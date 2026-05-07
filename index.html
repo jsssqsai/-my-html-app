@@ -1130,6 +1130,88 @@
             color: #424242;
             background: white;
         }
+
+        /* 蓝牙打印机连接样式 */
+        .bluetooth-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        .bluetooth-status.connected {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+        .bluetooth-status.disconnected {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+        .bluetooth-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+        .bluetooth-status.connected .bluetooth-dot {
+            background: #4CAF50;
+            animation: pulse 1.5s infinite;
+        }
+        .bluetooth-status.disconnected .bluetooth-dot {
+            background: #f44336;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .bluetooth-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .bluetooth-btn.connect {
+            background: #2E7D32;
+            color: white;
+        }
+        .bluetooth-btn.disconnect {
+            background: #f44336;
+            color: white;
+        }
+        .print-mode-select {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .print-mode-option {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #E0E0E0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .print-mode-option:hover {
+            border-color: #4CAF50;
+        }
+        .print-mode-option.selected {
+            border-color: #2E7D32;
+            background: #E8F5E9;
+        }
+        .print-mode-option .mode-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        .print-mode-option .mode-text {
+            font-size: 12px;
+            color: #666;
+        }
         /* 打印预览区域 */
         #previewContentWrapper {
             position: relative;
@@ -1163,6 +1245,7 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="bluetooth-printer.js"></script>
 </head>
 <body>
     <header class="header">
@@ -1449,6 +1532,26 @@
                 <button class="modal-close" onclick="closePrintPreview()">×</button>
             </div>
 
+            <!-- 蓝牙打印机连接状态 -->
+            <div id="bluetoothStatus" class="bluetooth-status disconnected">
+                <span class="bluetooth-dot"></span>
+                <span id="bluetoothStatusText" style="flex: 1;">蓝牙打印机未连接</span>
+                <button class="bluetooth-btn connect" onclick="showBluetoothHelp()" style="margin-right: 8px; background: #2196F3;">❓</button>
+                <button id="bluetoothBtn" class="bluetooth-btn connect" onclick="toggleBluetoothConnection()">连接</button>
+            </div>
+
+            <!-- 打印方式选择 -->
+            <div class="print-mode-select" id="printModeSelect">
+                <div class="print-mode-option selected" data-mode="browser" onclick="selectPrintMode('browser')">
+                    <div class="mode-icon">🖨️</div>
+                    <div class="mode-text">浏览器打印</div>
+                </div>
+                <div class="print-mode-option" data-mode="bluetooth" onclick="selectPrintMode('bluetooth')">
+                    <div class="mode-icon">📡</div>
+                    <div class="mode-text">蓝牙打印</div>
+                </div>
+            </div>
+
             <div id="previewContentWrapper" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                 <div id="previewContent">
                     <div class="empty-state">
@@ -1588,6 +1691,25 @@
                     <li>打印后才会计入营业额</li>
                     <li>清空不会影响统计数据</li>
                 </ul>
+
+                <h3 style="color: #2196F3; margin-bottom: 10px; margin-top: 20px;">🖨️ 蓝牙打印说明</h3>
+                <div style="background: #E3F2FD; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.8;">
+                    <p><strong>连接步骤：</strong></p>
+                    <ol style="margin-left: 20px; margin-bottom: 10px;">
+                        <li>确保打印机已开启并处于可发现模式</li>
+                        <li>确保 iPad 蓝牙已开启</li>
+                        <li>点击"预览打印" → 选择"蓝牙打印"</li>
+                        <li>点击"连接"按钮，在弹出的设备列表中选择打印机</li>
+                        <li>等待连接成功后，点击"确认打印"</li>
+                    </ol>
+                    <p><strong>注意事项：</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li>请使用 Chrome 或 Edge 浏览器</li>
+                        <li>需要通过 HTTPS 或 localhost 访问</li>
+                        <li>支持的打印机：芯烨 XPrinter 系列</li>
+                        <li>如果连接失败，请重启打印机后重试</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
@@ -1606,6 +1728,11 @@
             qrcode: ''
         };
         let editItemUnit = '斤';
+
+        // 蓝牙打印机相关变量
+        let bluetoothPrinter = null;
+        let currentPrintMode = 'browser'; // 'browser' 或 'bluetooth'
+        let isBluetoothConnected = false;
 
         function init() {
             loadData();
@@ -1697,6 +1824,53 @@
 
         function closeHelpModal() {
             document.getElementById('helpModal').classList.remove('active');
+        }
+
+        /**
+         * 显示蓝牙连接帮助
+         */
+        function showBluetoothHelp() {
+            const helpText = `🔷 蓝牙打印连接指南
+
+【连接步骤】
+1. 确保打印机已开启
+   - 长按打印机电源键开机
+   - 等待打印机进入就绪状态
+
+2. 使打印机进入可发现模式
+   - 通常需要长按某个按键（参考打印机说明书）
+   - 打印机指示灯会闪烁表示可被发现
+
+3. 确保 iPad 蓝牙已开启
+   - 设置 → 蓝牙 → 开启
+
+4. 在网页中连接
+   - 点击"连接"按钮
+   - 在弹出的设备列表中选择你的打印机
+   - 通常名称格式为：XP-XXX 或 XPrinter
+
+【常见问题】
+❓ 搜索不到打印机？
+   → 确保打印机处于可发现模式
+   → 重启打印机后重试
+   → 确保打印机与 iPad 距离在 10 米内
+
+❓ 连接失败？
+   → 检查 iPad 是否已配对其他设备
+   → 重启打印机和 iPad 蓝牙
+   → 确保使用 Chrome 或 Edge 浏览器
+
+❓ 打印乱码？
+   → 确保选择的是 ESC/POS 兼容的芯烨打印机
+
+【支持的环境】
+✓ Chrome 浏览器（推荐）
+✓ Edge 浏览器
+✓ HTTPS 或 localhost 环境
+✗ Safari（暂不支持 Web Bluetooth）
+✗ 微信内置浏览器`;
+
+            alert(helpText);
         }
 
         function exportData() {
@@ -2452,6 +2626,13 @@
 
             const previewContent = document.getElementById('previewContent');
             previewContent.innerHTML = generateReceiptHTML(true);
+
+            // 初始化打印模式选择
+            selectPrintMode('browser');
+
+            // 更新蓝牙状态显示
+            updateBluetoothUI();
+
             document.getElementById('printPreviewModal').classList.add('active');
         }
 
@@ -2460,8 +2641,180 @@
         }
 
         function confirmPrint() {
-            closePrintPreview();
-            printReceipt();
+            if (currentPrintMode === 'bluetooth') {
+                if (!isBluetoothConnected) {
+                    showToast('请先连接蓝牙打印机');
+                    return;
+                }
+                bluetoothPrintReceipt();
+            } else {
+                closePrintPreview();
+                printReceipt();
+            }
+        }
+
+        // ==================== 蓝牙打印机功能 ====================
+
+        /**
+         * 切换打印模式
+         */
+        function selectPrintMode(mode) {
+            currentPrintMode = mode;
+            document.querySelectorAll('.print-mode-option').forEach(el => {
+                el.classList.toggle('selected', el.dataset.mode === mode);
+            });
+
+            // 显示/隐藏蓝牙连接状态
+            const bluetoothStatus = document.getElementById('bluetoothStatus');
+            if (mode === 'bluetooth') {
+                bluetoothStatus.style.display = 'flex';
+            } else {
+                bluetoothStatus.style.display = 'none';
+            }
+        }
+
+        /**
+         * 切换蓝牙连接
+         */
+        async function toggleBluetoothConnection() {
+            if (isBluetoothConnected) {
+                // 断开连接
+                if (bluetoothPrinter) {
+                    bluetoothPrinter.disconnect();
+                }
+                isBluetoothConnected = false;
+                updateBluetoothUI();
+                showToast('蓝牙打印机已断开');
+            } else {
+                // 连接打印机
+                if (!BluetoothPrinter.isSupported()) {
+                    showToast('您的浏览器不支持蓝牙功能');
+                    return;
+                }
+
+                // 检查是否在安全上下文中（HTTPS 或 localhost）
+                if (!window.isSecureContext) {
+                    alert('蓝牙功能需要在安全环境中运行（HTTPS 或 localhost）\n\n请在以下环境中使用：\n1. 通过 https:// 访问\n2. 使用 localhost 本地服务器\n3. 不要使用 file:// 直接打开文件');
+                    return;
+                }
+
+                try {
+                    showToast('正在搜索蓝牙打印机...');
+                    bluetoothPrinter = new BluetoothPrinter();
+                    const result = await bluetoothPrinter.connect();
+
+                    isBluetoothConnected = true;
+                    updateBluetoothUI();
+                    showToast(`已连接到: ${result.printerName}`);
+
+                    // 监听断开事件
+                    bluetoothPrinter.onDisconnect = () => {
+                        isBluetoothConnected = false;
+                        updateBluetoothUI();
+                        showToast('蓝牙打印机已断开');
+                    };
+
+                } catch (error) {
+                    console.error('蓝牙连接失败:', error);
+                    // 显示更友好的错误提示
+                    const errorMsg = error.message;
+                    if (errorMsg.includes('取消了设备选择')) {
+                        showToast('您取消了选择，请重新点击连接按钮');
+                    } else if (errorMsg.includes('未找到蓝牙设备')) {
+                        alert(errorMsg);
+                    } else {
+                        showToast('连接失败: ' + errorMsg);
+                    }
+                    isBluetoothConnected = false;
+                    updateBluetoothUI();
+                }
+            }
+        }
+
+        /**
+         * 更新蓝牙连接状态UI
+         */
+        function updateBluetoothUI() {
+            const statusEl = document.getElementById('bluetoothStatus');
+            const statusText = document.getElementById('bluetoothStatusText');
+            const btn = document.getElementById('bluetoothBtn');
+
+            if (isBluetoothConnected) {
+                statusEl.className = 'bluetooth-status connected';
+                statusText.textContent = bluetoothPrinter ? bluetoothPrinter.printerName : '蓝牙打印机已连接';
+                btn.textContent = '断开';
+                btn.className = 'bluetooth-btn disconnect';
+            } else {
+                statusEl.className = 'bluetooth-status disconnected';
+                statusText.textContent = '蓝牙打印机未连接';
+                btn.textContent = '连接';
+                btn.className = 'bluetooth-btn connect';
+            }
+        }
+
+        /**
+         * 使用蓝牙打印小票
+         */
+        async function bluetoothPrintReceipt() {
+            if (!isBluetoothConnected || !bluetoothPrinter) {
+                showToast('蓝牙打印机未连接');
+                return;
+            }
+
+            if (currentOrder.length === 0) {
+                showToast('请先添加商品');
+                return;
+            }
+
+            try {
+                showToast('正在打印...');
+
+                const remark = document.getElementById('orderRemark').value.trim();
+                const totalAmount = currentOrder.reduce((sum, item) => sum + item.subtotal, 0);
+
+                // 使用 ESC/POS 指令生成打印数据
+                const escPos = new EscPosCommands();
+                const printData = escPos.generateReceipt(shopInfo, currentOrder, totalAmount, remark);
+
+                // 发送打印数据
+                await bluetoothPrinter.printRaw(printData.buffer);
+
+                // 保存订单数据
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('zh-CN');
+
+                const orderData = {
+                    id: Date.now().toString(),
+                    date: now.toISOString().split('T')[0],
+                    time: timeStr,
+                    items: [...currentOrder],
+                    total: totalAmount,
+                    remark: remark
+                };
+
+                const dateKey = orderData.date;
+                if (!dailySales[dateKey]) {
+                    dailySales[dateKey] = { totalAmount: 0, orders: [] };
+                }
+                dailySales[dateKey].totalAmount += totalAmount;
+                dailySales[dateKey].orders.push(orderData);
+                saveSales();
+
+                renderOrderHistory();
+                loadStats();
+
+                closePrintPreview();
+                showToast('打印成功，已计入营业额');
+
+                // 清空订单
+                currentOrder = [];
+                document.getElementById('orderRemark').value = '';
+                renderOrderItems();
+
+            } catch (error) {
+                console.error('蓝牙打印失败:', error);
+                showToast('打印失败: ' + error.message);
+            }
         }
 
         async function savePreviewAsImage() {
