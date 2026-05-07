@@ -1189,7 +1189,7 @@
 <body>
     <header class="header">
         <h1>🥩 生鲜小票系统</h1>
-        <input type="text" class="shop-name-input" id="shopName" placeholder="店铺名称" value="新鲜生鲜店" oninput="shopInfo.name=this.value;saveShopInfo()">
+        <input type="text" class="shop-name-input" id="shopName" placeholder="店铺名称" value="" oninput="shopInfo.name=this.value;saveShopInfo()">
     </header>
 
     <main class="main-content">
@@ -1660,7 +1660,7 @@
         let selectedUnit = '斤';
         let editingProductId = null;
         let shopInfo = {
-            name: '新鲜生鲜店',
+            name: '',
             address: '',
             phone: '',
             qrcode: ''
@@ -2008,7 +2008,7 @@
         }
 
         function saveShopSettings() {
-            shopInfo.name = document.getElementById('shopNameInput').value.trim() || '新鲜生鲜店';
+            shopInfo.name = document.getElementById('shopNameInput').value.trim() || '';
             shopInfo.address = document.getElementById('shopAddress').value.trim();
             shopInfo.phone = document.getElementById('shopPhone').value.trim();
             
