@@ -390,10 +390,10 @@ class EscPosCommands {
         c.push(this.newline());
         c.push(this.newline());
 
-        // 地址和电话 - 居中
+        // 地址和电话 - 居中，中间空一行
         c.push(this.align(1));
         if (shopInfo.address) { c.push(this.textToBytes(shopInfo.address)); c.push(this.newline()); }
-        if (shopInfo.phone) { c.push(this.textToBytes(shopInfo.phone)); c.push(this.newline()); }
+        if (shopInfo.phone) { c.push(this.newline()); c.push(this.textToBytes(shopInfo.phone)); c.push(this.newline()); }
         c.push(this.align(0));
         c.push(this.newline());
 
@@ -404,30 +404,31 @@ class EscPosCommands {
         c.push(this.align(0));
         c.push(this.newline());
 
-        // 分隔线
-        c.push(this.textToBytes('================'));
+        // 分隔线（平铺到最右侧）
+        c.push(this.textToBytes('================================'));
         c.push(this.newline());
         c.push(this.newline());
 
         // 商品列表标题
         c.push(this.bold(1));
-        c.push(this.textToBytes('商品名称   数量    金额'));
+        c.push(this.textToBytes('商品名称    数量  单位   金额'));
         c.push(this.bold(0));
         c.push(this.newline());
         c.push(this.newline());
 
-        // 商品列表
+        // 商品列表（数量和单位分开）
         orderItems.forEach((item, index) => {
             const name = item.name.substring(0, 6).padEnd(6, ' ');
-            const qty = (item.quantity + item.unit).substring(0, 6).padStart(6, ' ');
+            const qty = String(item.quantity).padStart(4, ' ');
+            const unit = item.unit.padEnd(4, ' ');
             const price = ('¥' + item.subtotal.toFixed(2)).padStart(8, ' ');
-            c.push(this.textToBytes(name + '  ' + qty + '  ' + price));
+            c.push(this.textToBytes(name + '  ' + qty + '  ' + unit + ' ' + price));
             c.push(this.newline());
             if (orderItems.length > 1 && index < orderItems.length - 1) c.push(this.newline());
         });
 
         c.push(this.newline());
-        c.push(this.textToBytes('================'));
+        c.push(this.textToBytes('================================'));
         c.push(this.newline());
         c.push(this.newline());
 
@@ -483,19 +484,20 @@ class EscPosCommands {
         // 日期
         c.push(this.textToBytes(dateStr + ' ' + timeStr));
         c.push(this.newline());
-        c.push(this.textToBytes('----------------'));
+        c.push(this.textToBytes('--------------------------------'));
         c.push(this.newline());
 
-        // 商品列表
+        // 商品列表（数量和单位分开）
         orderItems.forEach(item => {
-            const name = item.name.substring(0, 8).padEnd(8, ' ');
-            const qty = (item.quantity + item.unit).substring(0, 5).padStart(5, ' ');
+            const name = item.name.substring(0, 6).padEnd(6, ' ');
+            const qty = String(item.quantity).padStart(3, ' ');
+            const unit = item.unit.padEnd(3, ' ');
             const price = '¥' + item.subtotal.toFixed(2);
-            c.push(this.textToBytes(name + qty + price));
+            c.push(this.textToBytes(name + ' ' + qty + ' ' + unit + ' ' + price));
             c.push(this.newline());
         });
 
-        c.push(this.textToBytes('----------------'));
+        c.push(this.textToBytes('--------------------------------'));
         c.push(this.newline());
 
         // 总计
@@ -537,24 +539,25 @@ class EscPosCommands {
         c.push(this.newline());
         c.push(this.align(0));
 
-        c.push(this.textToBytes('----------------'));
+        c.push(this.textToBytes('--------------------------------'));
         c.push(this.newline());
 
-        // 商品列表（紧凑排列）
+        // 商品列表（紧凑排列，数量和单位分开）
         c.push(this.bold(1));
-        c.push(this.textToBytes('商品       数量   金额'));
+        c.push(this.textToBytes('商品      数量 单位  金额'));
         c.push(this.bold(0));
         c.push(this.newline());
 
         orderItems.forEach(item => {
             const name = item.name.substring(0, 6).padEnd(6, ' ');
-            const qty = (item.quantity + item.unit).substring(0, 5).padStart(5, ' ');
+            const qty = String(item.quantity).padStart(3, ' ');
+            const unit = item.unit.padEnd(3, ' ');
             const price = ('¥' + item.subtotal.toFixed(2)).padStart(7, ' ');
-            c.push(this.textToBytes(name + qty + price));
+            c.push(this.textToBytes(name + ' ' + qty + ' ' + unit + price));
             c.push(this.newline());
         });
 
-        c.push(this.textToBytes('----------------'));
+        c.push(this.textToBytes('--------------------------------'));
         c.push(this.newline());
 
         if (remark) { c.push(this.textToBytes('备注:' + remark)); c.push(this.newline()); }
@@ -563,7 +566,7 @@ class EscPosCommands {
         c.push(this.textToBytes('合计:¥' + total.toFixed(2)));
         c.push(this.bold(0));
         c.push(this.newline());
-        c.push(this.textToBytes('----------------'));
+        c.push(this.textToBytes('--------------------------------'));
         c.push(this.newline());
 
         c.push(this.align(1));
@@ -605,30 +608,31 @@ class EscPosCommands {
         c.push(this.align(0));
         c.push(this.newline());
 
-        c.push(this.textToBytes('================'));
+        c.push(this.textToBytes('================================'));
         c.push(this.newline());
         c.push(this.newline());
 
-        // 商品列表标题（含单价列）
+        // 商品列表标题（含单价列，数量和单位分开）
         c.push(this.bold(1));
-        c.push(this.textToBytes('商品    单价  数量   金额'));
+        c.push(this.textToBytes('商品   单价  数量 单位  金额'));
         c.push(this.bold(0));
         c.push(this.newline());
         c.push(this.newline());
 
-        // 商品列表（详细版：显示单价）
+        // 商品列表（详细版：显示单价，数量和单位分开）
         orderItems.forEach((item, index) => {
             const name = item.name.substring(0, 4).padEnd(4, ' ');
             const unitPrice = ('¥' + item.price.toFixed(1)).substring(0, 5).padStart(5, ' ');
-            const qty = (item.quantity + item.unit).substring(0, 5).padStart(5, ' ');
+            const qty = String(item.quantity).padStart(3, ' ');
+            const unit = item.unit.padEnd(3, ' ');
             const subtotal = ('¥' + item.subtotal.toFixed(2)).padStart(7, ' ');
-            c.push(this.textToBytes(name + ' ' + unitPrice + ' ' + qty + ' ' + subtotal));
+            c.push(this.textToBytes(name + ' ' + unitPrice + ' ' + qty + ' ' + unit + subtotal));
             c.push(this.newline());
             if (orderItems.length > 1 && index < orderItems.length - 1) c.push(this.newline());
         });
 
         c.push(this.newline());
-        c.push(this.textToBytes('================'));
+        c.push(this.textToBytes('================================'));
         c.push(this.newline());
         c.push(this.newline());
 
@@ -659,7 +663,7 @@ class EscPosCommands {
         c.push(this.newline());
 
         c.push(this.align(0));
-        c.push(this.textToBytes('================'));
+        c.push(this.textToBytes('================================'));
         c.push(this.newline());
         c.push(this.newline());
 
