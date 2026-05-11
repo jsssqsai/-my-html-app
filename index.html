@@ -2992,11 +2992,14 @@
             const dividerClass = isPreview ? 'preview-divider' : 'print-divider';
             const titleClass = isPreview ? 'preview-title' : 'print-title';
 
+            // 商品列表（含单价栏，数量单位分开显示）
             const itemsHTML = currentOrder.map(item => `
-                <div style="display: flex; justify-content: space-between; line-height: 1.5; margin-bottom: 6px;">
-                    <span style="flex: 1;">${item.name}</span>
-                    <span style="margin: 0 4px;">${item.quantity}${item.unit}</span>
-                    <span style="min-width: 45px; text-align: right;">¥${item.subtotal.toFixed(2)}</span>
+                <div style="display: flex; line-height: 1.8; margin-bottom: 4px; font-size: 11px;">
+                    <span style="width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</span>
+                    <span style="width: 55px; text-align: right;">¥${item.price.toFixed(1)}</span>
+                    <span style="width: 35px; text-align: right;">${item.quantity}</span>
+                    <span style="width: 30px; text-align: left; padding-left: 2px;">${item.unit}</span>
+                    <span style="flex: 1; text-align: right;">¥${item.subtotal.toFixed(2)}</span>
                 </div>
             `).join('');
 
@@ -3016,25 +3019,27 @@
                     ${shopPhoneLine}
                     <div class="${isPreview ? 'preview-info' : 'print-info'}">${dateStr} ${timeStr}</div>
                     <div class="${dividerClass}"></div>
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px;">
-                        <span>商品</span>
-                        <span>金额</span>
+                    <div style="display: flex; font-weight: bold; margin-bottom: 6px; font-size: 11px; border-bottom: 1px dashed #ccc; padding-bottom: 4px;">
+                        <span style="width: 70px;">商品</span>
+                        <span style="width: 55px; text-align: right;">单价</span>
+                        <span style="width: 35px; text-align: right;">数量</span>
+                        <span style="width: 30px; text-align: left; padding-left: 2px;">单位</span>
+                        <span style="flex: 1; text-align: right;">金额</span>
                     </div>
                     ${itemsHTML}
                     <div class="${dividerClass}"></div>
-                    ${remark ? `<div style="padding: 4px 0; font-size: 10px;">备注: ${remark}</div>` : ''}
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; padding-top: 4px;">
+                    ${remark ? `<div style="padding: 4px 0; font-size: 10px;">【备注】${remark}</div>` : ''}
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; padding-top: 6px; color: #e74c3c;">
                         <span>合计:</span>
-                        <span>¥${totalAmount.toFixed(2)} 元</span>
+                        <span>¥${totalAmount.toFixed(2)}</span>
                     </div>
                     ${qrcodeHTML}
                     <div class="${dividerClass}"></div>
-                    <div style="text-align: center; font-size: 10px; padding-top: 4px;">
-                        谢谢惠顾<br>
-                        欢迎下次光临
+                    <div style="text-align: center; font-size: 10px; padding-top: 6px;">
+                        谢谢惠顾，欢迎下次光临！
                     </div>
                     <div style="text-align: center; font-size: 9px; margin-top: 8px; margin-bottom: 15px;">
-                        -------------------
+                        ━━━━━━━━━━━━━━━━━━━━━━
                     </div>
                 </div>
             `;
